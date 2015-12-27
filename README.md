@@ -1,1 +1,0 @@
-A C port of the AS3 version of Syntrax replayer.
