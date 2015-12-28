@@ -24,6 +24,7 @@
 
 
 //---------------------------structures------------------------
+//don't pack
 struct VoiceEffect
 {
     int     VMBNMTNBQU;
@@ -39,6 +40,7 @@ struct VoiceEffect
     int     ABJGHAUY;
 };
 
+//don't pack
 struct Voice
 {
     int     wavelength;
@@ -65,6 +67,7 @@ struct Voice
     int     hasLooped;
 };
 
+//don't pack
 struct TuneChannel
 {
     int         JOEEPJCI;
@@ -182,58 +185,75 @@ struct Row
     uint8_t command;
 };
 
-//not packable
+//almost packable
 struct Instrument
 {
-        int16_t version;                         //int16le
-        char name[32];                         //char[32]
-        int16_t waveform:int;                        //int16le
-        int16_t wavelength:int;                      //int16le
-        int16_t masterVolume:int;                    //int16le
-        int16_t amWave:int;                          //int16le
-        int16_t amSpeed:int;                         //int16le
-        int16_t amLoopPoint:int;                     //int16le
-        int16_t finetune:int;                        //int16le
-        int16_t fmWave:int;                          //int16le
-        int16_t fmSpeed:int;                         //int16le
-        int16_t fmLoopPoint:int;                     //int16le
-        int16_t fmDelay:int;                         //int16le
-        int16_t arpIndex:int;                        //int16le
-        uint8_t m_ResetWave[16];            //uint8[16]
-        int16_t panWave:int;                         //int16le
-        int16_t panSpeed:int;                        //int16le
-        int16_t panLoopPoint:int;                    //int16le
-        int16_t UNK00:int;                           //int16le
-        int16_t UNK01:int;                           //int16le
-        int16_t UNK02:int;                           //int16le
-        int16_t UNK03:int;                           //int16le
-        int16_t UNK04:int;                           //int16le
-        int16_t UNK05:int;                           //int16le
-        effects:Vector.<InstrumentEffect>;   //InstrumentEffect[4]
-        smpFullImportPath:String;            //char[192]    //why do we even need to store a full path?
-        int32_t UNK06:uint;                          //uint32le
-        int32_t UNK07:uint;                          //uint32le
-        int32_t UNK08:uint;                          //uint32le
-        int32_t UNK09:uint;                          //uint32le
-        int32_t UNK0A:uint;                          //uint32le
-        int32_t UNK0B:uint;                          //uint32le
-        int32_t UNK0C:uint;                          //uint32le
-        int32_t UNK0D:uint;                          //uint32le
-        int32_t UNK0E:uint;                          //uint32le
-        int32_t UNK0F:uint;                          //uint32le
-        int32_t UNK10:uint;                          //uint32le
-        int32_t UNK11:uint;                          //uint32le
-        int16_t UNK12:int;                           //int16le
-        int16_t shareSmpDataFromInstr:int;           //int16le      //0 is off
-        int16_t hasLoop:int;                         //int16le
-        int16_t hasBidiLoop:int;                     //int16le
-        sampleBuffer:WaveBuffer;             //uint32le
-        smpStartPoint:int;                   //uint32le
-        smpLoopPoint:int;                    //uint32le
-        smpEndPoint:int;                     //uint32le
-        hasSample:int;                       //uint32le
-        smpLength:int;                       //uint32le
-        synthBuffers:Vector.<WaveBuffer>;    //int16le[16][0x100]
+    int16_t             version;
+    char                name[32];
+    int16_t             waveform;
+    int16_t             wavelength;
+    int16_t             masterVolume;
+    int16_t             amWave;
+    int16_t             amSpeed;
+    int16_t             amLoopPoint;
+    int16_t             finetune;
+    int16_t             fmWave;
+    int16_t             fmSpeed;
+    int16_t             fmLoopPoint;
+    int16_t             fmDelay;
+    int16_t             arpIndex;
+    uint8_t             m_ResetWave[16];
+    int16_t             panWave;
+    int16_t             panSpeed;
+    int16_t             panLoopPoint;
+    int16_t             UNK00;
+    int16_t             UNK01;
+    int16_t             UNK02;
+    int16_t             UNK03;
+    int16_t             UNK04;
+    int16_t             UNK05;
+    InstrumentEffect    effects[4];
+    char                smpFullImportPath[192]; //why do we even need to store a full path?
+    uint32_t            UNK06;
+    uint32_t            UNK07;
+    uint32_t            UNK08;
+    uint32_t            UNK09;
+    uint32_t            UNK0A;
+    uint32_t            UNK0B;
+    uint32_t            UNK0C;
+    uint32_t            UNK0D;
+    uint32_t            UNK0E;
+    uint32_t            UNK0F;
+    uint32_t            UNK10;
+    uint32_t            UNK11;
+    int16_t             UNK12;
+    int16_t             shareSmpDataFromInstr;           //0 is off
+    int16_t             hasLoop;
+    int16_t             hasBidiLoop;
+    uint32_t            smpStartPoint;
+    uint32_t            smpLoopPoint;
+    uint32_t            smpEndPoint;
+    uint32_t            hasSample;
+    uint32_t            smpLength;
+    int16_t             synthBuffers[16][0x100];
+    //move me
+    int16_t *sampleBuffer;
 };
 
+//packable
+struct InstrumentEffect
+{
+    uint32_t    destWave;
+    uint32_t    srcWave1;
+    uint32_t    srcWave2;
+    uint32_t    oscWave;
+    uint32_t    variable1;
+    uint32_t    variable2;
+    uint32_t    fxSpeed;
+    uint32_t    oscSpeed;
+    uint32_t    effectType;
+    int8_t      in5oscSelect;
+    int8_t      resetEffect;
+    int16_t     UNK00;
+};
 #endif       
