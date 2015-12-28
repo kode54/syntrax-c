@@ -6,3 +6,6 @@ Some conventions/helpers/whatever:
 *I will be writing malloc()s without worry of free() usage and deal with it after.
 *Vars commented as unused are clues of things that were not ported into AS3 player. I say leave them as is for later piecing.
 *WaveBuffer is a helper in AS3 and can be replaced with proper C.
+*Packable structs can be used to read data one struct at a time.
+*Almost packable structs need some stuff moved out of them that were re-introduced during some AS3 refactors.
+ These refactors make sense logically, but are useless for data reading.
