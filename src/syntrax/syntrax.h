@@ -24,23 +24,8 @@
 
 
 //---------------------------structures------------------------
-//don't pack
-struct VoiceEffect
-{
-    int     VMBNMTNBQU;
-    int     TIPUANVVR;
-    double  MDTMBBIQHRQ;
-    double  YLKJB;
-    double  DQVLFV;
-    int     MFATTMREMVP;
-    double  ILHG;
-    double  RKF;
-    int     SPYK;
-    int     QOMCBTRPXF;
-    int     ABJGHAUY;
-};
-
-//don't pack
+//player structs
+//don't pack these
 struct Voice
 {
     int     wavelength;
@@ -67,7 +52,21 @@ struct Voice
     int     hasLooped;
 };
 
-//don't pack
+struct VoiceEffect
+{
+    int     VMBNMTNBQU;
+    int     TIPUANVVR;
+    double  MDTMBBIQHRQ;
+    double  YLKJB;
+    double  DQVLFV;
+    int     MFATTMREMVP;
+    double  ILHG;
+    double  RKF;
+    int     SPYK;
+    int     QOMCBTRPXF;
+    int     ABJGHAUY;
+};
+
 struct TuneChannel
 {
     int         JOEEPJCI;
@@ -99,90 +98,24 @@ struct TuneChannel
     VoiceEffect effects[4];
 };
 
-//almost packable
-struct Subsong
-{
-    uint32_t UNK00[16];
-    //UNK00 is used for something. No idea what.
-    //There is a sequence to the data in it.
-    //zeroing it out with hex editor doesn't seem to break stuff with Jaytrax
-    //it could as well be uninitialized memory
-    uint8_t     mutedChans[16];
-    uint32_t    tempo;
-    uint32_t    groove;
-    uint32_t    startPosCoarse;
-    uint32_t    startPosFine;
-    uint32_t    endPosCoarse;
-    uint32_t    endPosFine;
-    uint32_t    loopPosCoarse;
-    uint32_t    loopPosFine;
-    int16_t     isLooping;
-    char        m_Name[32];
-    int16_t     channelNumber;
-    uint16_t    delayTime;
-    uint8_t     chanDelayAmt[16];
-    int16_t     amplification;
-    int16_t     UNK01;
-    int16_t     UNK02;
-    int16_t     UNK03;
-    int16_t     UNK04;
-    int16_t     UNK05;
-    int16_t     UNK06;
-    int16_t     UNK07;
-    //move me
-    Order *orders;
-};
 
-//almost packable
-struct Subsong
-{
-    uint16_t    version;
-    uint16_t    UNK00;
-    uint32_t    patNum;
-    uint32_t    subsongNum;
-    uint32_t    instrNum;
-    uint32_t    UNK01;
-    int16_t     UNK02;
-    int16_t     UNK03;
-    int16_t     UNK04;
-    int16_t     UNK05;
-    int16_t     UNK06;
-    int16_t     UNK07;
-    int16_t     UNK08;
-    int16_t     UNK09;
-    int16_t     UNK0A;
-    int16_t     UNK0B;
-    int16_t     UNK0C;
-    int16_t     UNK0D;
-    int16_t     UNK0E;
-    int16_t     UNK0F;
-    int16_t     UNK10;
-    int16_t     UNK11;
-        
-    //move me
-    public var rows:Vector.<Row>;                   //*Row[]
-    public var patNameSizes:Vector.<int>;           //*uint32le[]    -----\
-    public var patternNames:Vector.<String>;        //*char[]        -----/
-    public var instruments:Vector.<Instrument>;     //*Instrument[]
-    public var subsongs:Vector.<Subsong>;           //*Subsong[]
-    public var arpTable:Vector.<int>;               //*int8[]
-};
+//data structs
 
 //packable
-struct Order
+struct InstrumentEffect
 {
-    int16_t patIndex;   //0 means empty
-    int16_t patLen;
-};
-
-//packable
-struct Row
-{
-    uint8_t note;
-    uint8_t dest;
-    uint8_t instr;
-    int8_t  spd;
-    uint8_t command;
+    uint32_t    destWave;
+    uint32_t    srcWave1;
+    uint32_t    srcWave2;
+    uint32_t    oscWave;
+    uint32_t    variable1;
+    uint32_t    variable2;
+    uint32_t    fxSpeed;
+    uint32_t    oscSpeed;
+    uint32_t    effectType;
+    int8_t      in5oscSelect;
+    int8_t      resetEffect;
+    int16_t     UNK00;
 };
 
 //almost packable
@@ -241,19 +174,89 @@ struct Instrument
 };
 
 //packable
-struct InstrumentEffect
+struct Row
 {
-    uint32_t    destWave;
-    uint32_t    srcWave1;
-    uint32_t    srcWave2;
-    uint32_t    oscWave;
-    uint32_t    variable1;
-    uint32_t    variable2;
-    uint32_t    fxSpeed;
-    uint32_t    oscSpeed;
-    uint32_t    effectType;
-    int8_t      in5oscSelect;
-    int8_t      resetEffect;
-    int16_t     UNK00;
+    uint8_t note;
+    uint8_t dest;
+    uint8_t instr;
+    int8_t  spd;
+    uint8_t command;
 };
+
+//packable
+struct Order
+{
+    int16_t patIndex;   //0 means empty
+    int16_t patLen;
+};
+
+//almost packable
+struct Subsong
+{
+    uint32_t UNK00[16];
+    //UNK00 is used for something. No idea what.
+    //There is a sequence to the data in it.
+    //zeroing it out with hex editor doesn't seem to break stuff with Jaytrax
+    //it could as well be uninitialized memory
+    uint8_t     mutedChans[16];
+    uint32_t    tempo;
+    uint32_t    groove;
+    uint32_t    startPosCoarse;
+    uint32_t    startPosFine;
+    uint32_t    endPosCoarse;
+    uint32_t    endPosFine;
+    uint32_t    loopPosCoarse;
+    uint32_t    loopPosFine;
+    int16_t     isLooping;
+    char        m_Name[32];
+    int16_t     channelNumber;
+    uint16_t    delayTime;
+    uint8_t     chanDelayAmt[16];
+    int16_t     amplification;
+    int16_t     UNK01;
+    int16_t     UNK02;
+    int16_t     UNK03;
+    int16_t     UNK04;
+    int16_t     UNK05;
+    int16_t     UNK06;
+    int16_t     UNK07;
+    //move me
+    Order *orders;
+};
+
+//almost packable
+struct Song
+{
+    uint16_t    version;
+    uint16_t    UNK00;
+    uint32_t    patNum;
+    uint32_t    subsongNum;
+    uint32_t    instrNum;
+    uint32_t    UNK01;
+    int16_t     UNK02;
+    int16_t     UNK03;
+    int16_t     UNK04;
+    int16_t     UNK05;
+    int16_t     UNK06;
+    int16_t     UNK07;
+    int16_t     UNK08;
+    int16_t     UNK09;
+    int16_t     UNK0A;
+    int16_t     UNK0B;
+    int16_t     UNK0C;
+    int16_t     UNK0D;
+    int16_t     UNK0E;
+    int16_t     UNK0F;
+    int16_t     UNK10;
+    int16_t     UNK11;
+        
+    //move me
+    public var rows:Vector.<Row>;                   //*Row[]
+    public var patNameSizes:Vector.<int>;           //*uint32le[]    -----\
+    public var patternNames:Vector.<String>;        //*char[]        -----/
+    public var instruments:Vector.<Instrument>;     //*Instrument[]
+    public var subsongs:Vector.<Subsong>;           //*Subsong[]
+    public var arpTable:Vector.<int>;               //*int8[]
+};
+
 #endif       
