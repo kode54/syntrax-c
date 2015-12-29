@@ -362,11 +362,7 @@ void mixChunk(int16_t *outBuff, uint playbackBufferSize)
     }
     if ( playbackBufferSize <= 0 ) return;
     //blank write to playback buffer
-    for ( i = 0; i < playbackBufferSize; i++ )
-    {
-        *outbuff++ = 0;
-        *outbuff++ = 0;
-    }
+    memset(outbuff, 0, playbackBufferSize * 2);
 }
         
 void pausePlay(void)
@@ -379,3 +375,133 @@ void resumePlay(void)
     isPaused = 0;
 }
 
+void reset(void)
+{
+    int i, j;
+    
+    //dem assumptions
+    if (delayBufferL && delayBufferR){
+        memset(delayBufferL, 0, 65536);
+        memset(delayBufferR, 0, 65536);
+    }
+    if (tuneChannels){
+        
+        for (i = 0; i < SE_MAXCHANS; i++) {
+            TuneChannel *tc: = tuneChannels[i];
+            
+            tc.EQMIWERPIF = 0;
+            tc.LJHG = 0;
+            tc.insNum = -1;
+            tc.HFRLJCG = 0;
+            tc.ACKCWV = 0;
+            tc.ELPHLDR = 0;
+            tc.TVORFCC = 0;
+            tc.freq = 0;
+            tc.BNWIGU = 0;
+            tc.UHYDBDDI = 0;
+            tc.XESAWSO = 0;
+            tc.JOEEPJCI = 0;
+            tc.fmDelay = 0;
+            tc.sampleBuffer = null;
+            tc.smpLoopEnd = 0;
+            //tuneChan.smpLength = 0;
+            tc.sampPos = 0;
+            tc.EYRXAB = 0;
+            tc.volume = 0;
+            tc.panning = 0;
+            tc.VNVJPDIWAJQ = 0;
+            tc.smpLoopStart = 0;
+            tc.hasLoop = 0;
+            tc.hasBidiLoop = 0;
+            tc.isPlayingBackward = 0;
+            tc.hasLooped = 0;
+            
+            for (j = 0; j < 4; j++) {
+                VoiceEffect *voiceEffect = tc.effects[j];
+                
+                voiceEffect.QOMCBTRPXF = 0;
+                voiceEffect.TIPUANVVR = 0;
+                voiceEffect.MFATTMREMVP = 0;
+                voiceEffect.MDTMBBIQHRQ = 0;
+                voiceEffect.RKF = 0;
+                voiceEffect.DQVLFV = 0;
+                voiceEffect.ILHG = 0;
+                voiceEffect.YLKJB = 0;
+                voiceEffect.VMBNMTNBQU = 0;
+                voiceEffect.ABJGHAUY = 0;
+                voiceEffect.SPYK = 0;
+                
+            }
+            
+            memset(tc.synthBuffers, 0, 0x100 * SE_MAXCHANS + 1);
+        }
+    }
+}
+        
+        void newSong(void)
+        {
+            var _local1:int;
+            var i:int;
+            var j:int;
+            var _local4:Order;
+            var _local6:Vector.<Order>;
+            var _local7:Row;
+            
+            reset();
+            AMYGPFQCHSW = 1;
+            selectedSubsong = 0;
+            WDTECTE = 8;
+            AMVM = 0x0100;
+            synSong.h.subsongNum = 1;
+            synSong.h.version = 3457;
+            subsongs = new Vector.<Subsong>();
+            subsongs.push(new Subsong());
+            var subs0:Subsong = subsongs[0];
+            curSubsong = subsongs[selectedSubsong];
+            
+            subs0.tempo = 120;
+            subs0.groove = 0;
+            subs0.startPosCoarse = 0;
+            subs0.startPosFine = 0;
+            subs0.loopPosCoarse = 0;
+            subs0.loopPosFine = 0;
+            subs0.endPosCoarse = 1;
+            subs0.endPosFine = 0;
+            subs0.channelNumber = 4;
+            subs0.delayTime = 0x8000;
+            subs0.amplification = 400;
+            subs0.chanDelayAmt = new Vector.<int>(SE_MAXCHANS, true);
+
+            subs0.m_Name = "Empty";
+            subs0.mutedChans  = new Vector.<int>(SE_MAXCHANS, true);
+            
+            
+            subs0.orders = Tools.malloc_2DVector(Order, SE_MAXCHANS, 0x0100, true, true);
+            for (i = 0; i < SE_MAXCHANS; i++) {
+                _local6 = subs0.orders[i];
+                for (j = 0; j < 0x0100; j++) {
+                    _local6[j].patIndex = 0;
+                    _local6[j].patLen = 0;
+                }
+            }
+            
+            synSong.h.patNum = 2;
+            synSong.rows = Tools.malloc_1DVector(Row, 64 * synSong.h.patNum);
+            
+            for (i = 0; i < (64 * synSong.h.patNum); i++) {
+                rows[i].dest = 0;
+                rows[i].note = 0;
+                rows[i].instr = 0;
+                rows[i].command = 0;
+                rows[i].spd = 0;
+                
+            }
+            patternNames = new Vector.<String>();
+            patternNames.push("Empty");
+            patternNames.push("Pat1");
+            synSong.h.instrNum = 1;
+            synSong.instruments = new Vector.<Instrument>();
+            synSong.instruments.push(new Instrument());
+            
+            mutedChans = new Vector.<int>(SE_MAXCHANS, true);
+        }

@@ -7,6 +7,8 @@
 void mixChunk(int16_t *outBuff, uint playbackBufferSize);
 void pausePlay(void);
 void resumePlay(void);
+void reset(void);
+void newSong(void);
 
 //----------------------------typedefs-------------------------
 #define PACKED __attribute__((packed))
