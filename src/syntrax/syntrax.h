@@ -3,10 +3,16 @@
 
 #include <stdint.h>
 
-//----------------------------defines--------------------------
+//---------------------------prototypes------------------------
+void mixChunk(int16_t *outBuff, uint playbackBufferSize);
+void pausePlay(void);
+void resumePlay(void);
 
+//----------------------------typedefs-------------------------
 #define PACKED __attribute__((packed))
+typedef unsigned uint;
 
+//----------------------------defines--------------------------
 #define SE_NROFEFFECTS          18
 #define SE_MAXCHANS             16
 #define SE_NROFFINETUNESTEPS    16
