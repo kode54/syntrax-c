@@ -5,6 +5,8 @@
 
 //----------------------------defines--------------------------
 
+#define PACKED __attribute__((packed))
+
 #define SE_NROFEFFECTS          18
 #define SE_MAXCHANS             16
 #define SE_NROFFINETUNESTEPS    16
@@ -91,7 +93,9 @@ struct TuneChannel
     int         hasLoop;
     int         LJHG;
     int16_r     *sampleBuffer;
-    int16_t     *synthBuffers;       //16 * 0x100 + 1
+    //SQUASH effect overflows into next buffer
+    //SE_MAXCHANS * 0x100 + 1 must be allocated
+    int16_t     *synthBuffers;
     int         smpLoopStart;
     int         smpLoopEnd;
     int         hasLooped;
@@ -101,7 +105,7 @@ struct TuneChannel
 
 //data structs
 
-//packable
+#pragma pack(push,1)
 struct InstrumentEffect
 {
     uint32_t    destWave;
@@ -116,9 +120,10 @@ struct InstrumentEffect
     int8_t      in5oscSelect;
     int8_t      resetEffect;
     int16_t     UNK00;
-};
+} PACKED;
+#pragma pack(pop)
 
-//almost packable
+#pragma pack(push,1)
 struct Instrument
 {
     int16_t             version;
@@ -135,7 +140,7 @@ struct Instrument
     int16_t             fmLoopPoint;
     int16_t             fmDelay;
     int16_t             arpIndex;
-    uint8_t             m_ResetWave[16];
+    uint8_t             m_ResetWave[SE_MAXCHANS];
     int16_t             panWave;
     int16_t             panSpeed;
     int16_t             panLoopPoint;
@@ -146,7 +151,9 @@ struct Instrument
     int16_t             UNK04;
     int16_t             UNK05;
     InstrumentEffect    effects[4];
-    char                smpFullImportPath[192]; //why do we even need to store a full path?
+    //why do we even need to store a full path?
+    //only filename appears to be used.
+    char                smpFullImportPath[192];
     uint32_t            UNK06;
     uint32_t            UNK07;
     uint32_t            UNK08;
@@ -160,7 +167,7 @@ struct Instrument
     uint32_t            UNK10;
     uint32_t            UNK11;
     int16_t             UNK12;
-    int16_t             shareSmpDataFromInstr;           //0 is off
+    int16_t             shareSmpDataFromInstr; //0 is off
     int16_t             hasLoop;
     int16_t             hasBidiLoop;
     uint32_t            smpStartPoint;
@@ -168,12 +175,11 @@ struct Instrument
     uint32_t            smpEndPoint;
     uint32_t            hasSample;
     uint32_t            smpLength;
-    int16_t             synthBuffers[16][0x100];
-    //move me
-    int16_t *sampleBuffer;
-};
+    int16_t             synthBuffers[SE_MAXCHANS][0x100];
+} PACKED;
+#pragma pack(pop)
 
-//packable
+#pragma pack(push,1)
 struct Row
 {
     uint8_t note;
@@ -181,16 +187,18 @@ struct Row
     uint8_t instr;
     int8_t  spd;
     uint8_t command;
-};
+} PACKED;
+#pragma pack(pop)
 
-//packable
+#pragma pack(push,1)
 struct Order
 {
     int16_t patIndex;   //0 means empty
     int16_t patLen;
-};
+} PACKED;
+#pragma pack(pop)
 
-//almost packable
+#pragma pack(push,1)
 struct Subsong
 {
     uint32_t UNK00[16];
@@ -198,7 +206,7 @@ struct Subsong
     //There is a sequence to the data in it.
     //zeroing it out with hex editor doesn't seem to break stuff with Jaytrax
     //it could as well be uninitialized memory
-    uint8_t     mutedChans[16];
+    uint8_t     mutedChans[SE_MAXCHANS];
     uint32_t    tempo;
     uint32_t    groove;
     uint32_t    startPosCoarse;
@@ -211,7 +219,7 @@ struct Subsong
     char        m_Name[32];
     int16_t     channelNumber;
     uint16_t    delayTime;
-    uint8_t     chanDelayAmt[16];
+    uint8_t     chanDelayAmt[SE_MAXCHANS];
     int16_t     amplification;
     int16_t     UNK01;
     int16_t     UNK02;
@@ -220,12 +228,14 @@ struct Subsong
     int16_t     UNK05;
     int16_t     UNK06;
     int16_t     UNK07;
-    //move me
-    Order *orders;
-};
+    //if my eyes don't deceive me, this actually happens
+    //waste of space
+    Order orders[SE_MAXCHANS][0x100];
+} PACKED;
+#pragma pack(pop)
 
-//almost packable
-struct Song
+#pragma pack(push,1)
+struct SongHeader
 {
     uint16_t    version;
     uint16_t    UNK00;
@@ -249,14 +259,24 @@ struct Song
     int16_t     UNK0F;
     int16_t     UNK10;
     int16_t     UNK11;
-        
-    //move me
-    public var rows:Vector.<Row>;                   //*Row[]
-    public var patNameSizes:Vector.<int>;           //*uint32le[]    -----\
-    public var patternNames:Vector.<String>;        //*char[]        -----/
-    public var instruments:Vector.<Instrument>;     //*Instrument[]
-    public var subsongs:Vector.<Subsong>;           //*Subsong[]
-    public var arpTable:Vector.<int>;               //*int8[]
+} PACKED;
+#pragma pack(pop)
+
+
+//no need to pack
+struct Song
+{
+    SongHeader h;
+    int8_t arpTable[0x100];
+    
+    Row *rows;
+    //we don't know what maximum pat name length should be
+    //in fact this is probably a buffer overflow target in Syntrax(app crashed on too long name, from UI);
+    uint32_t *patNameSizes;
+    char **patternNames;
+    Instrument *instruments;
+    Subsong *subsongs;
+    int16_t **samples;
 };
 
 #endif       
