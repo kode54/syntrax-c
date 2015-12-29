@@ -3,13 +3,6 @@
 
 #include <stdint.h>
 
-//---------------------------prototypes------------------------
-void mixChunk(int16_t *outBuff, uint playbackBufferSize);
-void pausePlay(void);
-void resumePlay(void);
-void reset(void);
-void newSong(void);
-
 //----------------------------typedefs-------------------------
 #define PACKED __attribute__((packed))
 typedef unsigned uint;
@@ -100,7 +93,7 @@ struct TuneChannel
     int         VNVJPDIWAJQ;
     int         hasLoop;
     int         LJHG;
-    int16_r     *sampleBuffer;
+    int16_t     *sampleBuffer;
     //SQUASH effect overflows into next buffer
     //SE_MAXCHANS * 0x100 + 1 must be allocated
     int16_t     *synthBuffers;
@@ -286,5 +279,13 @@ struct Song
     Subsong *subsongs;
     int16_t **samples;
 };
+
+//---------------------------prototypes------------------------
+void mixChunk(int16_t *outBuff, uint playbackBufferSize);
+void pausePlay(void);
+void resumePlay(void);
+void reset(void);
+void newSong(void);
+void playInstrument(int chanNum, int instrNum, int note); //could be handy dandy
 
 #endif       
