@@ -3,6 +3,215 @@
 #include "syntrax.h"
 #include "file.h"
 
+
+int16_t *silentBuffer;
+uint8_t m_LastNotes[SE_MAXCHANS];
+
+uint32_t *freqTable;
+int16_t *dynamorphTable;
+
+int isPaused;
+Song *synSong;
+TuneChannel *tuneChannels;
+Voice *voices;
+
+int samplesPerBeat;
+int otherSamplesPerBeat;
+int someCounter;
+int channelNumber;
+int sePmSong;
+int16_t *overlapBuff;
+int16_t *delayBufferR;
+int16_t *delayBufferL;
+
+int bkpDelayPos;
+int delayPos;
+int gainPos;
+int overlapPos;
+
+int ISWLKT;
+int WDTECTE;
+int PQV;
+int AMVM;
+int PENIS;
+int posCoarse;
+int AMYGPFQCHSW;
+int posFine;
+int8_t mutedChans[SE_MAXCHANS];
+
+int selectedSubsong;
+Subsong *curSubsong;
+
+//local pointers to song structures
+Row *rows;
+char **patternNames;
+Instrument *instruments;
+Subsong *subsongs;
+int8_t *arpTable;
+int16_t **samples;
+
+uint bufflen;
+
+int noAutoplay = 1;
+
+
+
+
+
+void reset(void)
+{
+    int i, j;
+    
+    if (delayBufferL && delayBufferR){
+        memset(delayBufferL, 0, 65536 *2);
+        memset(delayBufferR, 0, 65536 *2);
+    }
+    if (tuneChannels){
+        
+        for (i = 0; i < SE_MAXCHANS; i++) {
+            TuneChannel *tc: = &tuneChannels[i];
+            
+            tc->EQMIWERPIF = 0;
+            tc->LJHG = 0;
+            tc->insNum = -1;
+            tc->HFRLJCG = 0;
+            tc->ACKCWV = 0;
+            tc->ELPHLDR = 0;
+            tc->TVORFCC = 0;
+            tc->freq = 0;
+            tc->BNWIGU = 0;
+            tc->UHYDBDDI = 0;
+            tc->XESAWSO = 0;
+            tc->JOEEPJCI = 0;
+            tc->fmDelay = 0;
+            tc->sampleBuffer = NULL;
+            tc->smpLoopEnd = 0;
+            //tc->smpLength = 0;
+            tc->sampPos = 0;
+            tc->EYRXAB = 0;
+            tc->volume = 0;
+            tc->panning = 0;
+            tc->VNVJPDIWAJQ = 0;
+            tc->smpLoopStart = 0;
+            tc->hasLoop = 0;
+            tc->hasBidiLoop = 0;
+            tc->isPlayingBackward = 0;
+            tc->hasLooped = 0;
+            
+            for (j = 0; j < 4; j++) {
+                VoiceEffect *vc = &tc->effects[j];
+                
+                vc->QOMCBTRPXF = 0;
+                vc->TIPUANVVR = 0;
+                vc->MFATTMREMVP = 0;
+                vc->MDTMBBIQHRQ = 0;
+                vc->RKF = 0;
+                vc->DQVLFV = 0;
+                vc->ILHG = 0;
+                vc->YLKJB = 0;
+                vc->VMBNMTNBQU = 0;
+                vc->ABJGHAUY = 0;
+                vc->SPYK = 0;
+                
+            }
+            
+            memset(tc->synthBuffers, 0, 0x100 * 16 *2 + 2);
+        }
+    }
+}
+
+void generateTables(void)
+{
+    int i, j;
+    
+    dynamorphTable = malloc(0x100 *2);
+    for (i = 0; i < 0x0100; i++ ) {
+        dynamorphTable[i] = (Math.sin(((Math.PI * i) / 128)) * 32760);
+    }
+    
+    //debug Asscilloscope says 0xF8 to 0x61FFB
+    //we probably don't have uint24_t at our disposal
+    //uint32_t it is, then
+    freqTable = malloc(SE_NROFFINETUNESTEPS * 128 *4);
+    for (i = 0; i < SE_NROFFINETUNESTEPS; i++) {
+        double x;
+        for (j = 0; j < 128; j++) {
+            x = (((j + 3) * 16) - i);
+            x = (x / 192);
+            x = Math.pow(2, x);
+            x = (x * 220) + 0.5;
+            freqTable[i* 128 + j] = int(x);
+        }
+    }
+}
+
+void constructor(void)
+{
+    int i, j;
+    
+    bufflen = BUFFERLENGTH;
+    generateTables();
+    
+    overlapPos = 0;
+    
+    silentBuffer = malloc(0x0100 *2);
+    memset(silentBuffer, 0, 0x0100 *2);
+    
+    ISWLKT = 0;
+    posCoarse = 0;
+    posFine = 0;
+    bkpDelayPos = 0;
+    PENIS = 0;
+    AMYGPFQCHSW = 0;
+    selectedSubsong = 0;
+    curSubsong = NULL;
+    PQV = 0;
+    isPaused = 0;
+    someCounter = 0;
+    WDTECTE = 0;
+    sePmSong = SE_PM_SONG;
+    AMVM = 0x0100;
+    channelNumber = 0;
+
+    otherSamplesPerBeat = 2200;
+    samplesPerBeat = 2200;
+    
+    overlapBuff  = manew Vector.<int>(SE_OVERLAP * 2 + 1);
+    delayBufferL = malloc(65536 *2);
+    delayBufferR = malloc(65536 *2);
+
+    tuneChannels = malloc(SE_MAXCHANS *sizeof(TuneChannel));
+    voices = malloc(SE_MAXCHANS *sizeof(Voice));
+    
+    reset();
+    delayPos = 0;
+    //synSong = malloc(sizeof(Song));
+}
+
+/*
+        public function destructor():void
+        {
+            var _local1:int;
+            arpTable = null;
+            silentBuffer = null;
+            overlapBuff = null;
+            delayBufferL = null;
+            delayBufferR = null;
+            freqTable = null;
+            tuneChannels = null;
+            silentBuffer = null;
+            arpTable = null;
+        }
+        
+        private function clearSongData():void
+        {
+            synSong.rows = null;
+            synSong.patternNames = null;
+            synSong.instruments = null;
+            synSong.subsongs = null;
+        }
+*/
+
 void instrEffect(int chanNum)
 {
     //TODO: minimize all the vars
@@ -774,7 +983,7 @@ void playInstrument(int chanNum, int instrNum, int note) //note: 1-112
         for (i = 0; i < 16; i++) {
             if (ins->m_ResetWave[i]){
                 //ins->synthBuffers[i].copyTo(tc.synthBuffers[i]);
-                memcpy(&tc.synthBuffers[i], &ins->synthBuffers[i], 0x100 * 2);
+                memcpy(&tc.synthBuffers[i], &ins->synthBuffers[i], 0x100 *2);
             }
         }
         tc->insNum = instrNum - 1;
@@ -1458,12 +1667,12 @@ void ABH(void)
                 TuneChannel *tc = &tuneChannels[i];
                 
                 tc->LJHG++;
-                _local3 = curSubsong->orders[i];
+                _local3 = &curSubsong->orders[i];
                 _local4 = tc->EQMIWERPIF;
                 if (_local4 == -1){
                     _local4 = 0;
                 }
-                _local2 = _local3[_local4].patLen;
+                _local2 = &_local3[_local4].patLen;
                 if ((((tc->LJHG == _local2)) || ((tc->EQMIWERPIF == -1)))){
                     tc->LJHG = 0;
                     tc->EQMIWERPIF++;
@@ -1484,7 +1693,7 @@ void ABH(void)
                         _local6 = 0;
                         
                         _local11 = 0;
-                        _local9 = curSubsong->orders[j0];
+                        _local9 = &curSubsong->orders[j0];
                         _local10 = ((curSubsong->loopPosCoarse * 64) + curSubsong->loopPosFine);
                         for (j1 = 0; j1 < 0x0100; j1++) {
                             if (_local6 > _local10){
@@ -1882,7 +2091,7 @@ void mixChunk(int16_t *outBuff, uint playbackBufferSize)
     }
     if ( playbackBufferSize <= 0 ) return;
     //blank write to playback buffer
-    memset(outbuff, 0, playbackBufferSize*2 * 2);
+    memset(outbuff, 0, playbackBufferSize * 2 *2);
 }
         
 void pausePlay(void)
@@ -1893,69 +2102,6 @@ void pausePlay(void)
 void resumePlay(void)
 {
     isPaused = 0;
-}
-
-void reset(void)
-{
-    int i, j;
-    
-    //dem assumptions
-    if (delayBufferL && delayBufferR){
-        memset(delayBufferL, 0, 65536 * 2);
-        memset(delayBufferR, 0, 65536 * 2);
-    }
-    if (tuneChannels){
-        
-        for (i = 0; i < SE_MAXCHANS; i++) {
-            TuneChannel *tc: = &tuneChannels[i];
-            
-            tc->EQMIWERPIF = 0;
-            tc->LJHG = 0;
-            tc->insNum = -1;
-            tc->HFRLJCG = 0;
-            tc->ACKCWV = 0;
-            tc->ELPHLDR = 0;
-            tc->TVORFCC = 0;
-            tc->freq = 0;
-            tc->BNWIGU = 0;
-            tc->UHYDBDDI = 0;
-            tc->XESAWSO = 0;
-            tc->JOEEPJCI = 0;
-            tc->fmDelay = 0;
-            tc->sampleBuffer = NULL;
-            tc->smpLoopEnd = 0;
-            //tc->smpLength = 0;
-            tc->sampPos = 0;
-            tc->EYRXAB = 0;
-            tc->volume = 0;
-            tc->panning = 0;
-            tc->VNVJPDIWAJQ = 0;
-            tc->smpLoopStart = 0;
-            tc->hasLoop = 0;
-            tc->hasBidiLoop = 0;
-            tc->isPlayingBackward = 0;
-            tc->hasLooped = 0;
-            
-            for (j = 0; j < 4; j++) {
-                VoiceEffect *vc = &tc->effects[j];
-                
-                vc->QOMCBTRPXF = 0;
-                vc->TIPUANVVR = 0;
-                vc->MFATTMREMVP = 0;
-                vc->MDTMBBIQHRQ = 0;
-                vc->RKF = 0;
-                vc->DQVLFV = 0;
-                vc->ILHG = 0;
-                vc->YLKJB = 0;
-                vc->VMBNMTNBQU = 0;
-                vc->ABJGHAUY = 0;
-                vc->SPYK = 0;
-                
-            }
-            
-            memset(tc->synthBuffers, 0, 0x100*16 * 2 + 2);
-        }
-    }
 }
         
         /*void newSong(void)
@@ -2049,8 +2195,103 @@ void IMXFLSSMB(int _arg1)
     WDTECTE = subsongs[0].tempo - subsongs[0].groove;
 }
 
+void initSubsong(int num)
+{
+    int _local2;
+    int i, j;
+    Order *_local5;
+    bool _local6;
+    int _local7;
+    int _local8;
+    double tempo;
+    
+    if (num >= synSong->h.subsongNum) return;
+    
+    selectedSubsong = num;
+    curSubsong = &subsongs[selectedSubsong];
+    channelNumber = curSubsong->channelNumber;
+    reset();
+    _local6 = false;
+    
+    for (i = 0; i < SE_MAXCHANS; i++) {
+        m_LastNotes[i] = 0;
+        _local2 = 0;
+        
+        _local8 = 0;
+        _local5 = &curSubsong->orders[i];
+        _local7 = (((curSubsong->startPosCoarse * 64) + curSubsong->startPosFine) - 1);
+        for (j = 0; j < 0x0100; j++) {
+            if (_local2 >= _local7){
+                if (j != _local7){
+                    j--;
+                }
+                break;
+            }
+            _local8 = _local2;
+            _local2 = (_local2 + _local5[j].patLen);
+            
+        }
+        if (j == 0x0100){
+            _local6 = true;
+            break;
+        }
+        _local7 = (_local7 - _local8);
+        _local7 = (_local7 & 63);
+        tuneChannels[i].EQMIWERPIF = j;
+        tuneChannels[i].LJHG = _local7;
+        curSubsong->mutedChans[i] = mutedChans[i];
+        
+    }
+    if (_local6 == false){
+        someCounter = 1;
+        sePmSong = SE_PM_SONG;
+        PQV = 1;
+        isPaused = noAutoplay;
+        WDTECTE = (8 + curSubsong->groove);
+        if (curSubsong->tempo){
+            tempo = double(curSubsong->tempo);
+            tempo = (tempo / 60);
+            tempo = (tempo * 32);
+            samplesPerBeat = int((44100 / tempo));
+            otherSamplesPerBeat = samplesPerBeat;
+        }
+        if (curSubsong->startPosFine == 0){
+            posCoarse = curSubsong->startPosCoarse - 1;
+        } else {
+            posCoarse = curSubsong->startPosCoarse;
+        }
+        posFine = curSubsong->startPosFine - 1;
+        posFine = posFine & 63;
+    }
+}
 
-        
-        
+Song loadSongFromByteArray(uint8_t *data)
+{
+    int i;
+    
+    AAUCAPQW();
+    reset();
+    clearSongData();
+    synSong = File_loadSong(data);
+    
+    //pass things locally
+    //not much purpouse here
+    //nor in AS3
+    //why did I do it
+    rows = synSong->rows;
+    patternNames = synSong->patternNames;
+    instruments = synSong->instruments;
+    subsongs = synSong->subsongs;
+    arpTable = synSong->arpTable;
+    samples  = synSong->samples;
+    
+    for (i = 0; i < SE_MAXCHANS; i++) {
+        mutedChans[i] = synSong->subsongs[0].mutedChans[i];
+    }
+    initSubsong(0);
+    
+    return synSong;
+}
+
 //<kode54> int16_t ** samples;
 //<kode54> then you (re)alloc sizeof(int16_t*)*n for samples, then sizeof(int16_t)*n for samples[y]
