@@ -2265,14 +2265,14 @@ void initSubsong(int num)
     }
 }
 
-Song loadSongFromByteArray(uint8_t *data)
+Song loadSongFromFile(char *path)
 {
     int i;
     
     AAUCAPQW();
     reset();
     clearSongData();
-    synSong = File_loadSong(data);
+    synSong = File_loadSong(path);
     
     //pass things locally
     //not much purpouse here
