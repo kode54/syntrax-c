@@ -302,6 +302,6 @@ void reset(void);
 //void newSong(void);
 void playInstrument(int chanNum, int instrNum, int note); //could be handy dandy
 void initSubsong(int num);
-Song loadSongFromFile(FILE *path);
+Song loadSongFromFile(char *path);
 
 #endif
