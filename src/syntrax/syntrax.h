@@ -18,15 +18,15 @@ typedef enum { false, true } bool;
     #define float(x)  ((float)x)
     #define uint(x)   ((uint)x)
     #define int(x)    ((int)x)
-#endif 
+#endif
 
 //----------------------------defines--------------------------
 #define SE_NROFEFFECTS          18
 #define SE_MAXCHANS             16
 #define SE_NROFFINETUNESTEPS    16
-                            
+
 #define SE_OVERLAP              100
-                            
+
 #define BUFFERLENGTH            4096
 #define CHANNELS                2
 #define BITRATE                 16
@@ -42,7 +42,7 @@ typedef enum { false, true } bool;
 //---------------------------structures------------------------
 //player structs
 //don't pack these
-struct Voice
+typedef struct
 {
     int     wavelength;
     int     gainDelay;
@@ -62,13 +62,13 @@ struct Voice
     int     sampPos;
     int     gainLeft;
     int     hasLoop;
-    int     smpLength:;
+    int     smpLength;
     int     gainDelayRight;
     int     gainDelayLeft;
     int     hasLooped;
-};
+} Voice;
 
-struct VoiceEffect
+typedef struct
 {
     int     VMBNMTNBQU;
     int     TIPUANVVR;
@@ -81,9 +81,9 @@ struct VoiceEffect
     int     SPYK;
     int     QOMCBTRPXF;
     int     ABJGHAUY;
-};
+} VoiceEffect;
 
-struct TuneChannel
+typedef struct
 {
     int         JOEEPJCI;
     int         BNWIGU;
@@ -114,13 +114,13 @@ struct TuneChannel
     int         smpLoopEnd;
     int         hasLooped;
     VoiceEffect effects[4];
-};
+} TuneChannel;
 
 
 //data structs
 
 #pragma pack(push,1)
-struct InstrumentEffect
+typedef struct
 {
     uint32_t    destWave;
     uint32_t    srcWave1;
@@ -134,11 +134,11 @@ struct InstrumentEffect
     int8_t      in5oscSelect;
     int8_t      resetEffect;
     int16_t     UNK00;
-} PACKED;
+} PACKED InstrumentEffect;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct Instrument
+typedef struct
 {
     int16_t             version;
     char                name[32];
@@ -190,30 +190,30 @@ struct Instrument
     uint32_t            hasSample;
     uint32_t            smpLength;
     int16_t             synthBuffers[SE_MAXCHANS][0x100];
-} PACKED;
+} PACKED Instrument;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct Row
+typedef struct
 {
     uint8_t note;
     uint8_t dest;
     uint8_t instr;
     int8_t  spd;
     uint8_t command;
-} PACKED;
+} PACKED Row;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct Order
+typedef struct
 {
     int16_t patIndex;   //0 means empty
     int16_t patLen;
-} PACKED;
+} PACKED Order;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct Subsong
+typedef struct
 {
     uint32_t UNK00[16];
     //UNK00 is used for something. No idea what.
@@ -245,11 +245,11 @@ struct Subsong
     //if my eyes don't deceive me, this actually happens
     //waste of space
     Order orders[SE_MAXCHANS][0x100];
-} PACKED;
+} PACKED Subsong;
 #pragma pack(pop)
 
 #pragma pack(push,1)
-struct SongHeader
+typedef struct
 {
     uint16_t    version;
     uint16_t    UNK00;
@@ -273,16 +273,16 @@ struct SongHeader
     int16_t     UNK0F;
     int16_t     UNK10;
     int16_t     UNK11;
-} PACKED;
+} PACKED SongHeader;
 #pragma pack(pop)
 
 
 //no need to pack
-struct Song
+typedef struct
 {
     SongHeader h;
     int8_t arpTable[0x100];
-    
+
     Row *rows;
     //we don't know what maximum pat name length should be
     //in fact this is probably a buffer overflow target in Syntrax(app crashed on too long name, from UI);
@@ -291,7 +291,7 @@ struct Song
     Instrument *instruments;
     Subsong *subsongs;
     int16_t **samples;
-};
+} Song;
 
 //---------------------------prototypes------------------------
 void constructor(void);
@@ -304,4 +304,4 @@ void playInstrument(int chanNum, int instrNum, int note); //could be handy dandy
 void initSubsong(int num);
 Song loadSongFromFile(FILE *path);
 
-#endif       
+#endif
