@@ -3,6 +3,6 @@
 
 #include "syntrax.h"
 
-Song* loadSong(char *path);
+Song* File_loadSong(char *path);
 
 #endif

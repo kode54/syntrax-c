@@ -110,7 +110,7 @@ typedef struct
     int16_t     *sampleBuffer;
     //SQUASH effect overflows into next buffer
     //SE_MAXCHANS * 0x100 + 1 must be allocated
-    int16_t     *synthBuffers;
+    int16_t     (*synthBuffers)[0x100];
     int         smpLoopStart;
     int         smpLoopEnd;
     int         hasLooped;

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "syntrax.h"
@@ -149,6 +150,8 @@ void generateTables(void)
 void constructor(void)
 {
     int i, j;
+    
+    srand(time(NULL));
 
     bufflen = BUFFERLENGTH;
     generateTables();
@@ -789,7 +792,7 @@ void instrEffect(int chanNum)
                 for (j = 0; j < 0x0100; j++ ) {
                     //Something very bad happens here
                     //I think it's fixed now.
-                    destBuff[j] = ((random() * 65530) - 0x8000);
+                    destBuff[j] = int((double(rand()) / double(RAND_MAX)) * 65530 - 0x8000);
 
                 }
                 break;
@@ -911,7 +914,7 @@ void channelSomethingElse(int chanNum)
                     tc->JOEEPJCI = ins->fmLoopPoint;
                 }
             }
-            _local4 -= tc->synthBuffers[ins->fmWave - 1][tc->JOEEPJCI];
+            _local4 = _local4 - tc->synthBuffers[ins->fmWave - 1][tc->JOEEPJCI];
         }
     }
     _local4 = (_local4 + tc->BNWIGU);
@@ -2273,7 +2276,7 @@ Song* loadSongFromFile(char *path)
 
     AAUCAPQW();
     reset();
-    clearSongData();
+    //clearSongData();
     synSong = File_loadSong(path);
 
     //pass things locally

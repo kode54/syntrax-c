@@ -4,7 +4,7 @@
 
 size_t filesize;
 
-Song* loadSong(char *path)
+Song* File_loadSong(char *path)
 {
     int i, j, k;
     int songVer;
