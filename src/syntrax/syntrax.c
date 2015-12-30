@@ -911,7 +911,7 @@ void channelSomethingElse(int chanNum)
                     tc->JOEEPJCI = ins->fmLoopPoint;
                 }
             }
-            _local4 = (_local4 - tc->synthBuffers[ins->fmWave - 1][tc->JOEEPJCI]);
+            _local4 -= tc->synthBuffers[ins->fmWave - 1][tc->JOEEPJCI];
         }
     }
     _local4 = (_local4 + tc->BNWIGU);
@@ -940,15 +940,15 @@ void playInstrument(int chanNum, int instrNum, int note) //note: 1-112
     int j;
     int i;
 
-    if (instrNum > synSong.h.instrNum){
+    if (instrNum > synSong->h.instrNum){
         return;
     }
     if ((((tuneChannels[chanNum].insNum == -1)) && ((instrNum == 0)))){
         return;
     }
 
-    TuneChannel *tc = tuneChannels[chanNum];
-    Voice *v        = voices[chanNum];
+    TuneChannel *tc = &tuneChannels[chanNum];
+    Voice *v        = &voices[chanNum];
 
     tc->ACKCWV = 0;
     tc->HFRLJCG = 0;
@@ -984,7 +984,7 @@ void playInstrument(int chanNum, int instrNum, int note) //note: 1-112
         for (i = 0; i < 16; i++) {
             if (ins->m_ResetWave[i]){
                 //ins->synthBuffers[i].copyTo(tc.synthBuffers[i]);
-                memcpy(&tc.synthBuffers[i], &ins->synthBuffers[i], 0x100 *2);
+                memcpy(&tc->synthBuffers[i], &ins->synthBuffers[i], 0x100 *2);
             }
         }
         tc->insNum = instrNum - 1;
@@ -1015,6 +1015,8 @@ void patEffect(int note, int command, int dest, int spd, int chanNum)
     Instrument *ins = &instruments[tc->insNum];
 
     if (tc->insNum == -1) return;
+    int off;
+    double tempo;
     switch (command) {
 
         //NONE
@@ -1024,7 +1026,6 @@ void patEffect(int note, int command, int dest, int spd, int chanNum)
 
         //PITCHBEND
         case 1:
-            int off;
             if (tc->VNVJPDIWAJQ){
                 off = freqTable[ins->finetune*128 + tc->VNVJPDIWAJQ];
                 tc->TVORFCC = tc->VNVJPDIWAJQ;
@@ -1561,7 +1562,6 @@ void patEffect(int note, int command, int dest, int spd, int chanNum)
 
         //CHNG BPM
         case 74:
-            double tempo;
             if (dest <= 10){
                 dest = 10;
             }
@@ -1592,10 +1592,11 @@ void patEffect(int note, int command, int dest, int spd, int chanNum)
             //do take note of audio latency when dealing with this.
 
             //This is called UserEvent in ocx player doc, I think
+            break;
     }
 }
 
-public function channelSomething(chanNum:int):void
+void channelSomething(int chanNum)
 {
     int _local2;
     int _local3;
@@ -1613,7 +1614,7 @@ public function channelSomething(chanNum:int):void
         _local2 = AMYGPFQCHSW;
         _local3 = ISWLKT;
     } else {
-        if (curSubsong.mutedChans[chanNum] == 1) return;
+        if (curSubsong->mutedChans[chanNum] == 1) return;
 
         _local3 = tuneChannels[chanNum].LJHG;
         _local2 = curSubsong->orders[chanNum][tuneChannels[chanNum].EQMIWERPIF].patIndex;
@@ -1753,11 +1754,11 @@ void mixChunk(int16_t *outBuff, uint playbackBufferSize)
 
     int i, j;
     uint sampleNum;
-    int amp, smp, pos:int;
+    int amp, smp, pos;
     int16_t audioMainR, audioMainL;
     int16_t audioDelayR, audioDelayL;
     uint otherDelayTime;
-    Voice *v
+    Voice *v;
     TuneChannel *tc;
 
     //We just don't know!
@@ -1960,8 +1961,8 @@ void mixChunk(int16_t *outBuff, uint playbackBufferSize)
                         }
 
                         //output
-                        *outbuff++ = audioMainR;
-                        *outbuff++ = audioMainL;
+                        *outBuff++ = audioMainR;
+                        *outBuff++ = audioMainL;
 
                         delayBufferL[delayPos] = (((audioDelayL / channelNumber) + delayBufferL[delayPos]) / 2);
                         delayBufferR[delayPos] = (((audioDelayR / channelNumber) + delayBufferR[delayPos]) / 2);
@@ -2092,7 +2093,7 @@ void mixChunk(int16_t *outBuff, uint playbackBufferSize)
     }
     if ( playbackBufferSize <= 0 ) return;
     //blank write to playback buffer
-    memset(outbuff, 0, playbackBufferSize * 2 *2);
+    memset(outBuff, 0, playbackBufferSize * 2 *2);
 }
 
 void pausePlay(void)
