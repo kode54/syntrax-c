@@ -6,6 +6,19 @@
 //----------------------------typedefs-------------------------
 #define PACKED __attribute__((packed))
 typedef unsigned uint;
+typedef enum { false, true } bool;
+
+//<monty> hold the fuck up
+//<monty> >#define double(x) ((double)x)
+//<monty> you're dead to me
+//hahahahahahahahaha
+//TODO: remove these after
+#ifndef __cplusplus
+    #define double(x) ((double)x)
+    #define float(x)  ((float)x)
+    #define uint(x)   ((uint)x)
+    #define int(x)    ((int)x)
+#endif 
 
 //----------------------------defines--------------------------
 #define SE_NROFEFFECTS          18
