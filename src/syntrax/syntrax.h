@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 //----------------------------typedefs-------------------------
+#define NULL 0
 #define PACKED __attribute__((packed))
 typedef unsigned uint;
 typedef enum { false, true } bool;
@@ -131,7 +132,7 @@ typedef struct
     uint32_t    fxSpeed;
     uint32_t    oscSpeed;
     uint32_t    effectType;
-    int8_t      in5oscSelect;
+    int8_t      oscSelect;
     int8_t      resetEffect;
     int16_t     UNK00;
 } PACKED InstrumentEffect;
@@ -302,6 +303,6 @@ void reset(void);
 //void newSong(void);
 void playInstrument(int chanNum, int instrNum, int note); //could be handy dandy
 void initSubsong(int num);
-Song loadSongFromFile(char *path);
+Song* loadSongFromFile(char *path);
 
 #endif

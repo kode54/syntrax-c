@@ -1,8 +1,8 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <syntrax.h>
+#include "syntrax.h"
 
-Song loadSong(char *path);
+Song* loadSong(char *path);
 
 #endif

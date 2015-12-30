@@ -19,7 +19,7 @@ WAVEFORMATEX wfx;
 LPSTR        audblock;
 char audiobuffer[BUFFNUM][((44100*2*2)/50)];
 
-Song *synSong = NULL;
+Song *sang = NULL;
 
 HANDLE eventh;
 
@@ -38,9 +38,9 @@ BOOL init( char *name )
 
   constructor();
 
-  synSong = loadSongFromFile(name);
+  sang = loadSongFromFile(name);
   resumePlay();
-  if( !synSong ) return FALSE;
+  if( !sang ) return FALSE;
 
   eventh = CreateEvent(
         NULL,               // default security attributes
