@@ -116,8 +116,7 @@ void reset(void)
                 vc->SPYK = 0;
 
             }
-
-            memset(tc->synthBuffers, 0, 0x100 * 16 *2 + 2);
+            memset(&tc->synthBuffers, 0, 0x100 * SE_MAXCHANS *2 + 2);
         }
     }
 }
@@ -152,10 +151,10 @@ void constructor(void)
     int i, j;
     
     srand(time(NULL));
-
+    
     bufflen = BUFFERLENGTH;
     generateTables();
-
+    
     overlapPos = 0;
 
     silentBuffer = malloc(0x0100 *2);
@@ -176,6 +175,7 @@ void constructor(void)
     sePmSong = SE_PM_SONG;
     AMVM = 0x0100;
     channelNumber = 0;
+    delayPos = 0;
 
     otherSamplesPerBeat = 2200;
     samplesPerBeat = 2200;
@@ -186,9 +186,8 @@ void constructor(void)
 
     tuneChannels = malloc(SE_MAXCHANS *sizeof(TuneChannel));
     voices = malloc(SE_MAXCHANS *sizeof(Voice));
-
     reset();
-    delayPos = 0;
+
     //synSong = malloc(sizeof(Song));
 }
 
@@ -2278,6 +2277,7 @@ Song* loadSongFromFile(char *path)
     reset();
     //clearSongData();
     synSong = File_loadSong(path);
+    if (!synSong) return NULL;
 
     //pass things locally
     //not much purpouse here

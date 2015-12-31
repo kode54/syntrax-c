@@ -23,6 +23,11 @@ Song *sang = NULL;
 
 HANDLE eventh;
 
+void pressAny(void) {
+    printf("Clicky key, get continue!\n");
+    getchar();
+}
+
 BOOL init( char *name )
 {
   //MMRESULT result;
@@ -35,12 +40,9 @@ BOOL init( char *name )
   wfx.wFormatTag      = WAVE_FORMAT_PCM;
   wfx.nBlockAlign     = (wfx.wBitsPerSample >> 3) * wfx.nChannels;
   wfx.nAvgBytesPerSec = wfx.nBlockAlign * wfx.nSamplesPerSec;
-
+  
   constructor();
-
-  sang = loadSongFromFile(name);
-  resumePlay();
-  if( !sang ) return FALSE;
+  //if( !sang ) return FALSE;
 
   eventh = CreateEvent(
         NULL,               // default security attributes
@@ -74,20 +76,21 @@ int main(int argc, char *argv[])
 
   if( argc < 2 )
   {
-    printf( "Usage: play_hvl <tune>\n" );
+    printf( "Usage: syntrax-c <tune>\n" );
     return 0;
   }
 
   if( init( argv[1] ) )
   {
     int i;
+    sang = loadSongFromFile(argv[1]);
+    if (!sang) return 1;
 
     for ( i=0; i<BUFFNUM; i++ ){
         memset( &header[i], 0, sizeof( WAVEHDR ) );
         header[i].dwBufferLength = ((44100*2*2)/50);
         header[i].lpData         = (LPSTR)audiobuffer[i];
     }
-
     for ( i=0; i<BUFFNUM-1; i++ ){
         mixChunk(audiobuffer[nextbuf], 1024);
         waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
@@ -95,6 +98,7 @@ int main(int argc, char *argv[])
         nextbuf = (nextbuf+1)%BUFFNUM;
     }
 
+    resumePlay();
     for(;;)
     {
       mixChunk(audiobuffer[nextbuf], 1024);

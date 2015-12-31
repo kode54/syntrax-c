@@ -41,14 +41,20 @@ Song* File_loadSong(char *path)
 
             synSong->patNameSizes = malloc(synSong->h.patNum *4);
             synSong->patternNames = malloc(synSong->h.patNum *sizeof(char *));
-
+/*
             for (i = 0; i < synSong->h.patNum; i++) {
                 fread(&synSong->patNameSizes[i], 4, 1, f);
                 synSong->patternNames[i] = malloc(synSong->patNameSizes[i]);
-                fread(synSong->patternNames[i], synSong->patNameSizes[i], 1, f);
+                fread(&synSong->patternNames[i], synSong->patNameSizes[i], 1, f);
                 synSong->patternNames[i][synSong->patNameSizes[i]] = 0x00;
             }
-
+*/
+            //TODO: fix me
+            for (i = 0; i < synSong->h.patNum; i++) {
+                fread(&synSong->patNameSizes[i], 4, 1, f);
+                fseek(f, synSong->patNameSizes[i], SEEK_CUR); 
+            }
+            
             synSong->instruments = malloc(synSong->h.instrNum *sizeof(Instrument));
             synSong->samples = malloc(synSong->h.instrNum * sizeof(int16_t *));
             for (i = 0; i < synSong->h.instrNum; i++) {
