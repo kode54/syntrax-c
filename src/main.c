@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     resumePlay();
     for(;;)
     {
-      mixChunk(audiobuffer[nextbuf], 512);
+      mixChunk(player, audiobuffer[nextbuf], 512);
       waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       nextbuf = (nextbuf+1)%BUFFNUM;
