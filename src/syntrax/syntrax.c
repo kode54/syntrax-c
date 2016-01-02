@@ -1710,8 +1710,8 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
     int i, j;
     uint sampleNum;
     int amp, smp, pos;
-    int16_t audioMainR, audioMainL;
-    int16_t audioDelayR, audioDelayL;
+    int32_t audioMainR, audioMainL;
+    int32_t audioDelayR, audioDelayL;
     uint otherDelayTime;
     Voice *v;
     TuneChannel *tc;
