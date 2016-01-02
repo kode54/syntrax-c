@@ -54,7 +54,7 @@ uint32_t get_le32(const void *p)
         (((const uint8_t*)p)[3]) * 0x1000000;
 }
 
-static ssize_t File_readHeader(SongHeader *h, const uint8_t *buffer, size_t size)
+static long File_readHeader(SongHeader *h, const uint8_t *buffer, size_t size)
 {
     if (size < 52) return -1;
 
@@ -84,7 +84,7 @@ static ssize_t File_readHeader(SongHeader *h, const uint8_t *buffer, size_t size
     return 52;
 }
 
-static ssize_t File_readSubSong(Subsong *subSong, const uint8_t *buffer, size_t size)
+static long File_readSubSong(Subsong *subSong, const uint8_t *buffer, size_t size)
 {
     int i, j;
     
@@ -135,7 +135,7 @@ static ssize_t File_readSubSong(Subsong *subSong, const uint8_t *buffer, size_t 
     return 16564;
 }
 
-ssize_t File_readRow(Row *r, const uint8_t *buffer, size_t size)
+long File_readRow(Row *r, const uint8_t *buffer, size_t size)
 {
     if (size < 5) return -1;
     
@@ -148,7 +148,7 @@ ssize_t File_readRow(Row *r, const uint8_t *buffer, size_t size)
     return 5;
 }
 
-static ssize_t File_readInstrumentEffect(InstrumentEffect *effect, const uint8_t *buffer, size_t size)
+static long File_readInstrumentEffect(InstrumentEffect *effect, const uint8_t *buffer, size_t size)
 {
     if (size < 40) return -1;
     
@@ -168,10 +168,10 @@ static ssize_t File_readInstrumentEffect(InstrumentEffect *effect, const uint8_t
     return 40;
 }
 
-static ssize_t File_readInstrument(Instrument *instr, const uint8_t *buffer, size_t size)
+static long File_readInstrument(Instrument *instr, const uint8_t *buffer, size_t size)
 {
     int i, j;
-    ssize_t sizeRead;
+    long sizeRead;
     
     if (size < 8712) return -1;
 
@@ -268,7 +268,7 @@ Song* File_loadSongMem(const uint8_t *buffer, size_t size)
     Row *row;
     Instrument *instr;
     Song *synSong;
-    ssize_t sizeRead;
+    long sizeRead;
 
     synSong = (Song *) calloc(1, sizeof(Song));
     if (!synSong) return NULL;
