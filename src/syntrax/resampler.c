@@ -145,7 +145,8 @@ void resampler_set_rate( void *_r, double new_factor )
 	{
 		double least_error = 2;
 		double pos = 0;
-		for ( int r = 1; r <= max_res; r++ )
+		int r;
+		for ( r = 1; r <= max_res; r++ )
 		{
 			pos += new_factor;
 			double nearest = floor( pos + 0.5 );
@@ -168,7 +169,8 @@ void resampler_set_rate( void *_r, double new_factor )
 	double pos = 0.0;
 	/*int input_per_cycle = 0;*/
 	imp_t* out = rs->impulses;
-	for ( int n = res; --n >= 0; )
+	int n;
+	for ( n = res; --n >= 0; )
 	{
 		gen_sinc( rolloff, (int) (rs->width_ * filter + 1) & ~1, pos, filter,
 				(double)(imp_scale * gain * filter), (int) rs->width_, out );
@@ -214,7 +216,8 @@ void resampler_write_pair(void *_r, sample_t ls, sample_t rs)
 
 	if (!r->latency)
 	{
-		for (int i = 0; i < adj_width / 2; ++i)
+	    int i;
+		for ( i = 0; i < adj_width / 2; ++i)
 		{
 			r->buffer_in[r->inptr + 0] = 0;
 			r->buffer_in[r->inptr + 1] = 0;
@@ -259,7 +262,8 @@ static const sample_t * resampler_inner_loop( resampler *r, sample_t** out_,
 			intermediate_t r = (intermediate_t)pt * (intermediate_t)(in [1]);
 			if ( out >= out_end )
 				break;
-			for ( int n = (adj_width - 2) / 2; n; --n )
+			int n;
+			for ( n = (adj_width - 2) / 2; n; --n )
 			{
 				pt = imp [1];
 				l += (intermediate_t)pt * (intermediate_t)(in [2]);
