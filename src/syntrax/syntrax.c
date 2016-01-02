@@ -9,6 +9,19 @@
 #include "file.h"
 #include "resampler.h"
 
+
+static int initVoice(Voice *v)
+{
+    memset(v, 0, sizeof(Voice));
+    //v->
+    
+    v->resampler[0] = resampler_create();
+    v->resampler[1] = resampler_create();
+    if (!v->resampler[0] || !v->resampler[1]) return 0;
+    
+    return 1;
+}
+
 static void reset(Player *p)
 {
     int i, j;
@@ -180,9 +193,8 @@ Player * playerCreate(int SAMPLEFREQUENCY)
     
     for (i = 0; i < SE_MAXCHANS; i++)
     {
-        p->voices[i].resampler[0] = resampler_create();
-        p->voices[i].resampler[1] = resampler_create();
-        if (!p->voices[i].resampler[0] || !p->voices[i].resampler[1]) goto FAIL;
+        //clear the damned thing up before using it
+        if (!initVoice(&p->voices[i])) goto FAIL;
     }
     
     reset(p);
@@ -1765,7 +1777,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
             for (i=0; i < p->channelNumber; ++i )
             {
                 v = &p->voices[i]; tc = &p->tuneChannels[i];
-
+                
                 insNum = tc->insNum;
                 if ( insNum == -1 )
                 {
