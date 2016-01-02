@@ -92,8 +92,10 @@ int main(int argc, char *argv[])
 
   if( argc < 2 )
   {
+    //My F2 gets stuck, lol
     printf( "Usage: syntrax-c <tune.jxs>\n" );
-    printf( "[ and ] keys change subtune.\n" );
+    printf( "F3 and F4 keys change subtune.\n" );
+    printf( "ESC closes.\n" );
     printf( "\n" );
     system("pause");
     return 0;
@@ -122,8 +124,7 @@ int main(int argc, char *argv[])
       waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       nextbuf = (nextbuf+1)%BUFFNUM;
 
-      // Don't do this in your own player or plugin :-)
-      //while( waveOutUnprepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) ) == WAVERR_STILLPLAYING ) ;
+      
       while( waveOutUnprepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) ) == WAVERR_STILLPLAYING ){
         if (_kbhit()) {
             int subnum;
@@ -131,31 +132,34 @@ int main(int argc, char *argv[])
                 case 0:  /* introduces an extended key */
                 case 227:  /* this also happens on Win32 (I think) */
                     switch (_getch()) {  /* read the extended key code */
-                        case 72: /* up arrow press */
+                        case 61:    //F3, subtune--
+                            subnum = info.selectedSubs;
+                            --subnum;
+                            if (subnum < 0) subnum = info.totalSubs - 1;
+                            
+                            if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                            updateScreen();
                             break;
-                        case 75: /* left arrow press */
+                        case 62:    //F4, subtune++
+                            subnum = info.selectedSubs;
+                            subnum = ++subnum % info.totalSubs;
+                            
+                            if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                            updateScreen();
                             break;
-                        case 77: /* right arrow press */
+                        case 72:    //up arrow press
                             break;
-                        case 80: /* down arrow press */
+                        case 75:    //left arrow press
+                            break;
+                        case 77:    //right arrow press
+                            break;
+                        case 80:    //down arrow press
                             break;
                         /* etc */
                     }
                     break;
-                case '[':
-                    subnum = info.selectedSubs;
-                    --subnum;
-                    if (subnum < 0) subnum = info.totalSubs - 1;
-                    
-                    if (info.selectedSubs != subnum) initSubsong(player, subnum);
-                    updateScreen();
-                    break;
-                case ']':
-                    subnum = info.selectedSubs;
-                    subnum = ++subnum % info.totalSubs;
-                    
-                    if (info.selectedSubs != subnum) initSubsong(player, subnum);
-                    updateScreen();
+                case 27:    //escape, exit
+                    goto GTFO;
                     break;
 
                 case 'H': /* capital 'H' key press */ break;
@@ -168,6 +172,9 @@ int main(int argc, char *argv[])
     }
 
   }
+  GTFO:
+  //TODO: properly close WaveOut
+  //too lazy
   playerDestroy(player);
   File_freeSong(sang);
 
