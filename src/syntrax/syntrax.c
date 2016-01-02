@@ -9,23 +9,14 @@
 #include "file.h"
 #include "resampler.h"
 
-
-static int initVoice(Voice *v)
-{
-    memset(v, 0, sizeof(Voice));
-    //v->
-    
-    v->resampler[0] = resampler_create();
-    v->resampler[1] = resampler_create();
-    if (!v->resampler[0] || !v->resampler[1]) return 0;
-    
-    return 1;
-}
-
 static void reset(Player *p)
 {
     int i, j;
 
+    if (p->overlapBuff){
+        memset(p->overlapBuff, 0, SE_OVERLAP * 2 *2 + 2);
+    }
+    
     if (p->delayBufferL && p->delayBufferR){
         memset(p->delayBufferL, 0, 65536 *2);
         memset(p->delayBufferR, 0, 65536 *2);
@@ -193,8 +184,12 @@ Player * playerCreate(int SAMPLEFREQUENCY)
     
     for (i = 0; i < SE_MAXCHANS; i++)
     {
-        //clear the damned thing up before using it
-        if (!initVoice(&p->voices[i])) goto FAIL;
+        Voice *v = &p->voices[i];
+        memset(v, 0, sizeof(Voice));
+        
+        v->resampler[0] = resampler_create();
+        v->resampler[1] = resampler_create();
+        if (!v->resampler[0] || !v->resampler[1]) goto FAIL;
     }
     
     reset(p);
