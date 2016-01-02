@@ -86,7 +86,7 @@ int main(int argc, const char* const* argv)
         int max_channels = 0;
         syntrax_info info;
         running = 1;
-        while ( running )
+        while ( running && fade_start < fade_length )
 		{
             mixChunk(player, sample_buffer, 2048);
             if (playerGetSongEnded(player)) break;
