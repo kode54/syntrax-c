@@ -233,6 +233,7 @@ static void instrEffect(Player *p, int chanNum)
     int _local39;
     int _local40;
     int _local43;
+	int butt, ron, pat, buf2, buf1;
 
     TuneChannel *tc        = &p->tuneChannels[chanNum];
     const Instrument  *ins = &p->instruments[tc->insNum];
@@ -803,7 +804,6 @@ static void instrEffect(Player *p, int chanNum)
                 var1 = (var1 + var2);
                 _local22 = 0;
 
-                int butt, ron, pat, buf2, buf1;
                 for (j = 0; j < 0x0100; j++ ) {
                     //Hex Rays decompiler is lovely tool.
                     //butt        = (butt & 0xFFFF0000) | (_local22 & 0x0000FFFF);
@@ -919,6 +919,9 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
 {
     int j;
     int i;
+    TuneChannel *tc;
+    Voice *v;
+	const Instrument *ins;
 
     if (instrNum > p->synSong->h.instrNum){
         return;
@@ -926,10 +929,10 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
     if ((((p->tuneChannels[chanNum].insNum == -1)) && ((instrNum == 0)))){
         return;
     }
-
-    TuneChannel *tc = &p->tuneChannels[chanNum];
-    Voice *v        = &p->voices[chanNum];
-
+    
+    tc = &p->tuneChannels[chanNum];
+    v  = &p->voices[chanNum];
+    
     tc->ACKCWV = 0;
     tc->HFRLJCG = 0;
     tc->ELPHLDR = 0;
@@ -942,7 +945,6 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
     tc->XESAWSO = 0;
     p->m_LastNotes[chanNum] = note;
 
-    const Instrument *ins;
     if (instrNum != 0) {
         ins = &p->instruments[instrNum - 1];
 
@@ -996,10 +998,10 @@ static void patEffect(Player *p, int note, int command, int dest, int spd, int c
 {
     TuneChannel *tc       = &p->tuneChannels[chanNum];
     Instrument *ins       = &p->instruments[tc->insNum];
-
-    if (tc->insNum == -1) return;
     int off;
     double tempo;
+
+    if (tc->insNum == -1) return;
     switch (command) {
 
         //NONE
@@ -1739,6 +1741,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
     uint otherDelayTime;
     Voice *v;
     TuneChannel *tc;
+	int insNum;
 
     //We just don't know!
     uint dword_6632774C = 0;
@@ -1763,7 +1766,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
             {
                 v = &p->voices[i]; tc = &p->tuneChannels[i];
 
-                int insNum = tc->insNum;
+                insNum = tc->insNum;
                 if ( insNum == -1 )
                 {
                     v->waveBuff = p->silentBuffer;
