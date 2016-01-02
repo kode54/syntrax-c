@@ -2,23 +2,16 @@
 #define SYNTRAX_H
 
 #include <stdint.h>
+#include <string.h>
+#include <sys/time.h>
 
 //----------------------------typedefs-------------------------
+#ifndef NULL
 #define NULL 0
-#define PACKED __attribute__((packed))
+#endif
 typedef unsigned uint;
-typedef enum { false, true } bool;
-
-//<monty> hold the fuck up
-//<monty> >#define double(x) ((double)x)
-//<monty> you're dead to me
-//hahahahahahahahaha
-//TODO: remove these after
 #ifndef __cplusplus
-    #define double(x) ((double)x)
-    #define float(x)  ((float)x)
-    #define uint(x)   ((uint)x)
-    #define int(x)    ((int)x)
+typedef enum { false, true } bool;
 #endif
 
 //----------------------------defines--------------------------
@@ -31,7 +24,6 @@ typedef enum { false, true } bool;
 #define BUFFERLENGTH            4096
 #define CHANNELS                2
 #define BITRATE                 16
-#define SAMPLEFREQUENCY         44100
 #define RESAMPLE_POINTS         4
 
 //some constants for controlling stuff
@@ -54,7 +46,7 @@ typedef struct
     int     smpLoopEnd;
     int     PPMXBYLQ; //unused
     int     gain;
-    int16_t *waveBuff;
+    const int16_t *waveBuff;
     int     hasBidiLoop;
     int     synthPos;
     int     gainRight;
@@ -107,7 +99,7 @@ typedef struct
     int         VNVJPDIWAJQ;
     int         hasLoop;
     int         LJHG;
-    int16_t     *sampleBuffer;
+    const int16_t *sampleBuffer;
     //SQUASH effect overflows into next buffer
     //SE_MAXCHANS * 0x100 + 1 must be allocated
     int16_t     synthBuffers[SE_MAXCHANS][0x100];
@@ -121,7 +113,6 @@ typedef struct
 
 //data structs
 
-#pragma pack(push,1)
 typedef struct
 {
     uint32_t    destWave;
@@ -136,14 +127,12 @@ typedef struct
     int8_t      oscSelect;
     int8_t      resetEffect;
     int16_t     UNK00;
-} PACKED InstrumentEffect;
-#pragma pack(pop)
+} InstrumentEffect;
 
-#pragma pack(push,1)
 typedef struct
 {
     int16_t             version;
-    char                name[32];
+    char                name[33];
     int16_t             waveform;
     int16_t             wavelength;
     int16_t             masterVolume;
@@ -169,7 +158,7 @@ typedef struct
     InstrumentEffect    effects[4];
     //why do we even need to store a full path?
     //only filename appears to be used.
-    char                smpFullImportPath[192];
+    char                smpFullImportPath[193];
     uint32_t            UNK06;
     uint32_t            UNK07;
     uint32_t            UNK08;
@@ -192,10 +181,8 @@ typedef struct
     uint32_t            hasSample;
     uint32_t            smpLength;
     int16_t             synthBuffers[SE_MAXCHANS][0x100];
-} PACKED Instrument;
-#pragma pack(pop)
+} Instrument;
 
-#pragma pack(push,1)
 typedef struct
 {
     uint8_t note;
@@ -203,18 +190,14 @@ typedef struct
     uint8_t instr;
     int8_t  spd;
     uint8_t command;
-} PACKED Row;
-#pragma pack(pop)
+} Row;
 
-#pragma pack(push,1)
 typedef struct
 {
     int16_t patIndex;   //0 means empty
     int16_t patLen;
-} PACKED Order;
-#pragma pack(pop)
+} Order;
 
-#pragma pack(push,1)
 typedef struct
 {
     uint32_t UNK00[16];
@@ -232,7 +215,7 @@ typedef struct
     uint32_t    loopPosCoarse;
     uint32_t    loopPosFine;
     int16_t     isLooping;
-    char        m_Name[32];
+    char        m_Name[33];
     int16_t     channelNumber;
     uint16_t    delayTime;
     uint8_t     chanDelayAmt[SE_MAXCHANS];
@@ -247,10 +230,8 @@ typedef struct
     //if my eyes don't deceive me, this actually happens
     //waste of space
     Order orders[SE_MAXCHANS][0x100];
-} PACKED Subsong;
-#pragma pack(pop)
+} Subsong;
 
-#pragma pack(push,1)
 typedef struct
 {
     uint16_t    version;
@@ -275,11 +256,9 @@ typedef struct
     int16_t     UNK0F;
     int16_t     UNK10;
     int16_t     UNK11;
-} PACKED SongHeader;
-#pragma pack(pop)
+} SongHeader;
 
 
-//no need to pack
 typedef struct
 {
     SongHeader h;
@@ -295,15 +274,76 @@ typedef struct
     int16_t **samples;
 } Song;
 
-//---------------------------prototypes------------------------
-void constructor(void);
-void mixChunk(int16_t *outBuff, uint playbackBufferSize);
-void pausePlay(void);
-void resumePlay(void);
-void reset(void);
-//void newSong(void);
-void playInstrument(int chanNum, int instrNum, int note); //could be handy dandy
-void initSubsong(int num);
-Song* loadSongFromFile(char *path);
 
+typedef struct Player
+{
+    int16_t *silentBuffer;
+    uint8_t m_LastNotes[SE_MAXCHANS];
+
+    uint32_t *freqTable;
+    int16_t *dynamorphTable;
+
+    const Song *synSong;
+    TuneChannel *tuneChannels;
+    Voice *voices;
+    
+    int SAMPLEFREQUENCY;
+
+    int samplesPerBeat;
+    int otherSamplesPerBeat;
+    int someCounter;
+    int channelNumber;
+    int sePmSong;
+    int16_t *overlapBuff;
+    int16_t *delayBufferR;
+    int16_t *delayBufferL;
+
+    int bkpDelayPos;
+    int delayPos;
+    int gainPos;
+    int overlapPos;
+
+    int ISWLKT;
+    int WDTECTE;
+    int PQV;
+    int AMVM;
+    int DONGS;
+    int posCoarse;
+    int AMYGPFQCHSW;
+    int posFine;
+    int8_t mutedChans[SE_MAXCHANS];
+
+    int selectedSubsong;
+    Subsong curSubsong;
+
+    //local pointers to song structures
+    const Row *rows;
+    const char ** patternNames;
+    Instrument *instruments;
+    const Subsong *subsongs;
+    const int8_t *arpTable;
+    const int16_t **samples;
+
+    uint bufflen;
+} Player;
+
+
+//---------------------------prototypes------------------------
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+Player * playerCreate(int sampleFrequency);
+void playerDestroy(Player *);
+
+int loadSong(Player *, const Song *);
+void initSubsong(Player *, int num);
+
+void mixChunk(Player *, int16_t *outBuff, uint playbackBufferSize);
+
+void playInstrument(Player *, int chanNum, int instrNum, int note); //could be handy dandy
+
+#ifdef __cplusplus
+}
+#endif
 #endif

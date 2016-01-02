@@ -20,6 +20,7 @@ LPSTR        audblock;
 char audiobuffer[BUFFNUM][((44100*2*2)/50)];
 
 Song *sang = NULL;
+Player *player = NULL;
 
 HANDLE eventh;
 
@@ -41,8 +42,13 @@ BOOL init( char *name )
   wfx.nBlockAlign     = (wfx.wBitsPerSample >> 3) * wfx.nChannels;
   wfx.nAvgBytesPerSec = wfx.nBlockAlign * wfx.nSamplesPerSec;
   
-  constructor();
-  //if( !sang ) return FALSE;
+  sang = File_loadSong( name );
+  if ( !sang ) return FALSE;
+    
+  player = playerCreate( 44100 );
+  if( !player ) return FALSE;
+    
+  if ( loadSong( player, sang ) < 0 ) return FALSE;
 
   eventh = CreateEvent(
         NULL,               // default security attributes
@@ -76,15 +82,13 @@ int main(int argc, char *argv[])
 
   if( argc < 2 )
   {
-    printf( "Usage: syntrax-c <tune>\n" );
+    printf( "Usage: syntrax-c <tune.jxs>\n" );
     return 0;
   }
 
   if( init( argv[1] ) )
   {
     int i;
-    sang = loadSongFromFile(argv[1]);
-    if (!sang) return 1;
 
     for ( i=0; i<BUFFNUM; i++ ){
         memset( &header[i], 0, sizeof( WAVEHDR ) );
@@ -92,7 +96,7 @@ int main(int argc, char *argv[])
         header[i].lpData         = (LPSTR)audiobuffer[i];
     }
     for ( i=0; i<BUFFNUM-1; i++ ){
-        mixChunk(audiobuffer[nextbuf], 512);
+        mixChunk(player, audiobuffer[nextbuf], 512);
         waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         nextbuf = (nextbuf+1)%BUFFNUM;
@@ -114,7 +118,8 @@ int main(int argc, char *argv[])
     }
 
   }
-  shut();
+  playerDestroy(player);
+  File_freeSong(sang);
 
   return 0;
 }
