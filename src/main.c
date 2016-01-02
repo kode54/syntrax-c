@@ -96,15 +96,15 @@ int main(int argc, char *argv[])
         header[i].lpData         = (LPSTR)audiobuffer[i];
     }
     for ( i=0; i<BUFFNUM-1; i++ ){
-        mixChunk(player, audiobuffer[nextbuf], 512);
+        mixChunk(player, audiobuffer[nextbuf], 44100/50);
         waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         nextbuf = (nextbuf+1)%BUFFNUM;
     }
-    resumePlay();
+    
     for(;;)
     {
-      mixChunk(player, audiobuffer[nextbuf], 512);
+      mixChunk(player, audiobuffer[nextbuf], 44100/50);
       waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       nextbuf = (nextbuf+1)%BUFFNUM;
