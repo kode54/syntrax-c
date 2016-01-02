@@ -2308,6 +2308,8 @@ int loadSong(Player *p, const Song *synSong)
     p->arpTable = synSong->arpTable;
     p->samples  = (const int16_t **) synSong->samples;
 
+    //Do we really need to?
+    //What would Syntrax do?
     for (i = 0; i < SE_MAXCHANS; i++) {
         p->mutedChans[i] = synSong->subsongs[0].mutedChans[i];
     }
