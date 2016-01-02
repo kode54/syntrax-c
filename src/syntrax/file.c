@@ -123,7 +123,6 @@ static long File_readSubSong(Subsong *subSong, const uint8_t *buffer, size_t siz
     subSong->UNK04          = get_le16(buffer + 174);
     subSong->UNK05          = get_le16(buffer + 176);
     subSong->UNK06          = get_le16(buffer + 178);
-    /*subSong->UNK07          = get_le16(buffer + 180);*/
 
     for (i = 0; i < SE_MAXCHANS; i++) {
         for (j = 0; j < 0x100; j++) {

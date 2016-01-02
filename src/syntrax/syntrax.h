@@ -226,7 +226,6 @@ typedef struct
     int16_t     UNK04;
     int16_t     UNK05;
     int16_t     UNK06;
-    int16_t     UNK07;
     //if my eyes don't deceive me, this actually happens
     //waste of space
     Order orders[SE_MAXCHANS][0x100];
