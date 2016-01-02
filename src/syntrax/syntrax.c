@@ -42,7 +42,6 @@ static void reset(Player *p)
             tc->smpLoopEnd = 0;
             //tc->smpLength = 0;
             tc->sampPos = 0;
-            tc->synthPos = 0;
             tc->EYRXAB = 0;
             tc->volume = 0;
             tc->panning = 0;
@@ -970,7 +969,6 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
         tc->isPlayingBackward = 0;
         tc->EYRXAB            = -1;
         tc->fmDelay           = ins->fmDelay;
-        tc->synthPos          = 0;
 
         for (i = 0; i < 16; i++) {
             if (ins->m_ResetWave[i]){
@@ -1786,7 +1784,6 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                     int waveNum  = p->instruments[insNum].waveform;
                     v->wavelength = (p->instruments[insNum].wavelength) - 1;
                     v->waveBuff = tc->synthBuffers[waveNum];
-                    v->synthPos = tc->synthPos;
                     v->isSample = 0;
                 }
                 else
@@ -1992,17 +1989,16 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                         tc->isPlayingBackward = v->isPlayingBackward;
                         tc->hasLooped = v->hasLooped;
                     }
-                    else
-                    {
-                        tc->synthPos = v->synthPos;
-                    }
                 }
             }
             if ( p->otherSamplesPerBeat == (p->samplesPerBeat * p->SAMPLEFREQUENCY) / 44100 )
             {
                 p->bkpDelayPos = p->delayPos;
                 for (i = 0; i < p->channelNumber; i++)
+                {
+                    p->voices[i].bkpSynthPos = p->voices[i].synthPos;
                     resampler_dup_inplace(p->voices[i].resampler[1], p->voices[i].resampler[0]);
+                }
 
                 p->overlapPos = 0;
                 if ( outBuff )
@@ -2112,6 +2108,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                     }
                 }
                 p->delayPos = p->bkpDelayPos;
+                for (i = 0; i < p->channelNumber; i++) p->voices[i].synthPos = p->voices[i].bkpSynthPos;
 
                 //dword_66327200 = 2 * sampleNum;
                 advanceTick(p);
