@@ -5,7 +5,7 @@
 #include "syntrax.h"
 #include "file.h"
 
-void reset(Player *p)
+static void reset(Player *p)
 {
     int i, j;
 
@@ -1721,9 +1721,6 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
 
     if ( p->channelNumber > 0 )
     {
-        if ( playbackBufferSize & 1) playbackBufferSize--;
-        if ( playbackBufferSize <= 0 ) return;
-
         while ( playbackBufferSize > 0 )
         {
             if ( p->otherSamplesPerBeat >= playbackBufferSize )
@@ -2046,8 +2043,6 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
         }
         return;
     }
-    if ( playbackBufferSize <= 0 ) return;
-    //blank write to playback buffer
     memset(outBuff, 0, playbackBufferSize * 2 *2);
 }
 
