@@ -49,19 +49,19 @@ static void reset(Player *p)
             tc->hasLooped = 0;
 
             for (j = 0; j < 4; j++) {
-                VoiceEffect *vc = &tc->effects[j];
+                VoiceEffect *ve = &tc->effects[j];
 
-                vc->QOMCBTRPXF = 0;
-                vc->TIPUANVVR = 0;
-                vc->MFATTMREMVP = 0;
-                vc->MDTMBBIQHRQ = 0;
-                vc->RKF = 0;
-                vc->DQVLFV = 0;
-                vc->ILHG = 0;
-                vc->YLKJB = 0;
-                vc->VMBNMTNBQU = 0;
-                vc->ABJGHAUY = 0;
-                vc->SPYK = 0;
+                ve->QOMCBTRPXF = 0;
+                ve->TIPUANVVR = 0;
+                ve->MFATTMREMVP = 0;
+                ve->MDTMBBIQHRQ = 0;
+                ve->RKF = 0;
+                ve->DQVLFV = 0;
+                ve->ILHG = 0;
+                ve->YLKJB = 0;
+                ve->VMBNMTNBQU = 0;
+                ve->ABJGHAUY = 0;
+                ve->SPYK = 0;
 
             }
             memset(&tc->synthBuffers, 0, 0x100 * SE_MAXCHANS *2 + 2);
