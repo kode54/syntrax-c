@@ -49,7 +49,6 @@ typedef struct
     int     synthPos;
     int     gainRight;
     int     smpLoopStart;
-    int     bkpSynthPos;
     int     sampPos;
     int     gainLeft;
     int     hasLoop;
@@ -92,6 +91,7 @@ typedef struct
     int         volume;
     int         ACKCWV;
     int         sampPos;
+    int         synthPos;
     int         insNum;
     int         EQMIWERPIF;
     int         freq;
