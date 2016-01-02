@@ -2,8 +2,6 @@
 #define SYNTRAX_H
 
 #include <stdint.h>
-#include <string.h>
-#include <sys/time.h>
 
 //----------------------------typedefs-------------------------
 #ifndef NULL
@@ -59,6 +57,8 @@ typedef struct
     int     gainDelayRight;
     int     gainDelayLeft;
     int     hasLooped;
+    void  * resampler[2];
+    int     last_delta;
 } Voice;
 
 typedef struct

@@ -1,9 +1,13 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
+#include <time.h>
 
 #include "syntrax.h"
 #include "file.h"
+#include "resampler.h"
 
 static void reset(Player *p)
 {
@@ -97,6 +101,8 @@ static int generateTables(Player *p)
 
 void playerDestroy(Player *p)
 {
+    int i;
+    
     if (p) {
         if (p->dynamorphTable) free(p->dynamorphTable);
         if (p->freqTable)      free(p->freqTable);
@@ -105,7 +111,14 @@ void playerDestroy(Player *p)
         if (p->delayBufferL)   free(p->delayBufferL);
         if (p->delayBufferR)   free(p->delayBufferR);
         if (p->tuneChannels)   free(p->tuneChannels);
-        if (p->voices)         free(p->voices);
+        if (p->voices) {
+            for (i = 0; i < SE_MAXCHANS; i++)
+            {
+                resampler_destroy(p->voices[i].resampler[0]);
+                resampler_destroy(p->voices[i].resampler[1]);
+            }
+            free(p->voices);
+        }
         
         if (p->instruments)    free(p->instruments);
         
@@ -164,6 +177,13 @@ Player * playerCreate(int SAMPLEFREQUENCY)
     if (!p->tuneChannels) goto FAIL;
     p->voices = malloc(SE_MAXCHANS *sizeof(Voice));
     if (!p->voices) goto FAIL;
+    
+    for (i = 0; i < SE_MAXCHANS; i++)
+    {
+        p->voices[i].resampler[0] = resampler_create();
+        p->voices[i].resampler[1] = resampler_create();
+        if (!p->voices[i].resampler[0] || !p->voices[i].resampler[1]) goto FAIL;
+    }
     
     reset(p);
     
@@ -931,9 +951,9 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
         } else {
             tc->sampleBuffer = p->samples[ins->shareSmpDataFromInstr - 1];
         }
-        tc->sampPos           = ins->smpStartPoint << 8;
-        tc->smpLoopStart      = ins->smpLoopPoint << 8;
-        tc->smpLoopEnd        = ins->smpEndPoint << 8;
+        tc->sampPos           = ins->smpStartPoint;
+        tc->smpLoopStart      = ins->smpLoopPoint;
+        tc->smpLoopEnd        = ins->smpEndPoint;
         tc->hasLoop           = ins->hasLoop;
         tc->hasBidiLoop       = ins->hasBidiLoop;
         tc->hasLooped         = 0;
@@ -948,6 +968,9 @@ void playInstrument(Player *p, int chanNum, int instrNum, int note) //note: 1-11
             }
         }
         tc->insNum = instrNum - 1;
+        
+        resampler_clear(v->resampler[0]);
+        v->last_delta = 0;
     }
     ins = &p->instruments[tc->insNum];
 
@@ -1748,7 +1771,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                 else if ( !tc->sampleBuffer )
                 {
                     int waveNum  = p->instruments[insNum].waveform;
-                    v->wavelength = (p->instruments[insNum].wavelength << 8) - 1;
+                    v->wavelength = (p->instruments[insNum].wavelength) - 1;
                     v->waveBuff = tc->synthBuffers[waveNum];
                     v->isSample = 0;
                 }
@@ -1770,6 +1793,12 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
 
                 v->gain = (tc->volume + 10000) / 39;
                 v->delta = (tc->freq << 8) / p->SAMPLEFREQUENCY;
+                if (v->delta != v->last_delta)
+                {
+                    double fdelta = (double)v->delta * (1.0 / (double)0x100);
+                    v->last_delta = v->delta;
+                    resampler_set_rate(v->resampler[0], fdelta);
+                }
 
                 if ( v->gain > 0x100 )
                     v->gain = 0x100;
@@ -1831,63 +1860,78 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                 v = &p->voices[j];
                                 if ( v->isSample == 1 )
                                 {
-                                    if ( v->sampPos != -1 )
+                                    if ( v->sampPos != -1 || resampler_get_avail(v->resampler[0]) )
                                     {
                                         //interpolation
+                                        sample_t s;
+                                        while ( v->sampPos != -1 && resampler_get_min_fill(v->resampler[0]) )
+                                        {
+                                            s = v->waveBuff[v->sampPos];
+                                            resampler_write_pair(v->resampler[0], s, s);
+                                            if ( v->isPlayingBackward )
+                                            {
+                                                v->sampPos--;
+                                                if ( v->sampPos <= v->smpLoopStart )
+                                                {
+                                                    v->isPlayingBackward = 0;
+                                                    v->sampPos++;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                v->sampPos++;
+                                                if ( v->sampPos >= v->smpLoopEnd )
+                                                {
+                                                    if ( v->hasLoop )
+                                                    {
+                                                        v->hasLooped = 1;
+                                                        if ( v->hasBidiLoop )
+                                                        {
+                                                            v->isPlayingBackward = 1;
+                                                            v->sampPos--;
+                                                        }
+                                                        else
+                                                        {
+                                                            v->sampPos += v->smpLoopStart - v->smpLoopEnd;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        v->sampPos = -1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
                                         //smp = intp->interpSamp(v);
-                                        smp = v->waveBuff[v->sampPos>>8];
+                                        resampler_read_pair(v->resampler[0], &s, &s);
+                                        smp = s;
 
                                         audioMainR  += (smp * v->gainRight) >> 8;
                                         audioMainL  += (smp * v->gainLeft) >> 8;
                                         audioDelayR += (smp * v->gainDelayRight) >> 8;
                                         audioDelayL += (smp * v->gainDelayLeft) >> 8;
-                                        if ( v->isPlayingBackward )
-                                        {
-                                            v->sampPos -= v->delta;
-                                            if ( v->sampPos <= v->smpLoopStart )
-                                            {
-                                                v->isPlayingBackward = 0;
-                                                v->sampPos += v->delta;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            v->sampPos += v->delta;
-                                            if ( v->sampPos >= v->smpLoopEnd )
-                                            {
-                                                if ( v->hasLoop )
-                                                {
-                                                    v->hasLooped = 1;
-                                                    if ( v->hasBidiLoop )
-                                                    {
-                                                        v->isPlayingBackward = 1;
-                                                        v->sampPos -= v->delta;
-                                                    }
-                                                    else
-                                                    {
-                                                        v->sampPos += v->smpLoopStart - v->smpLoopEnd;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    v->sampPos = -1;
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                                 else
                                 {
                                     //interpolation
                                     //smp = intp->interpSynt(v);
-                                    smp = v->waveBuff[v->synthPos>>8];
+                                    sample_t s;
+                                    while ( resampler_get_min_fill(v->resampler[0]) )
+                                    {
+                                        s = v->waveBuff[v->synthPos];
+                                        resampler_write_pair(v->resampler[0], s, s);
+                                        v->synthPos++;
+                                        v->synthPos &= v->wavelength;
+                                    }
+                                    resampler_read_pair(v->resampler[0], &s, &s);
+                                    smp = s;
 
                                     audioMainR  += (smp * v->gainRight) >> 8;
                                     audioMainL  += (smp * v->gainLeft) >> 8;
                                     audioDelayR += (smp * v->gainDelayRight) >> 8;
                                     audioDelayL += (smp * v->gainDelayLeft) >> 8;
-                                    v->synthPos += v->delta;
-                                    v->synthPos &= v->wavelength;
                                 }
                             }
                         }
@@ -1939,7 +1983,11 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
             if ( p->otherSamplesPerBeat == (p->samplesPerBeat * p->SAMPLEFREQUENCY) / 44100 )
             {
                 p->bkpDelayPos = p->delayPos;
-                for (i = 0; i < p->channelNumber; i++) p->voices[i].bkpSynthPos = p->voices[i].synthPos;
+                for (i = 0; i < p->channelNumber; i++)
+                {
+                    p->voices[i].bkpSynthPos = p->voices[i].synthPos;
+                    resampler_dup_inplace(p->voices[i].resampler[1], p->voices[i].resampler[0]);
+                }
 
                 p->overlapPos = 0;
                 if ( outBuff )
@@ -1957,63 +2005,77 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                 v = &p->voices[j];
                                 if ( v->isSample == 1 )
                                 {
-                                    if ( v->sampPos != -1 )
+                                    if ( v->sampPos != -1 || resampler_get_avail(v->resampler[1]) )
                                     {
                                         //interpolation
                                         //smp = intp->interpSamp(v);
-                                        smp = v->waveBuff[v->sampPos>>8];
+                                        sample_t s;
+                                        while ( v->sampPos != -1 && resampler_get_min_fill(v->resampler[1]) )
+                                        {
+                                            s = v->waveBuff[v->sampPos];
+                                            resampler_write_pair(v->resampler[1], s, s);
+                                            if ( v->isPlayingBackward )
+                                            {
+                                                v->sampPos--;
+                                                if ( v->sampPos <= v->smpLoopStart )
+                                                {
+                                                    v->isPlayingBackward = 0;
+                                                    v->sampPos++;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                v->sampPos++;
+                                                if ( v->sampPos >= v->smpLoopEnd )
+                                                {
+                                                    if ( v->hasLoop )
+                                                    {
+                                                        v->hasLooped = 1;
+                                                        if ( v->hasBidiLoop )
+                                                        {
+                                                            v->isPlayingBackward = 1;
+                                                            v->sampPos--;
+                                                        }
+                                                        else
+                                                        {
+                                                            v->sampPos += v->smpLoopStart - v->smpLoopEnd;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        v->sampPos = -1;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        resampler_read_pair(v->resampler[1], &s, &s);
+                                        smp = s;
 
                                         audioMainR  += (smp * v->gainRight) >> 8;
                                         audioMainL  += (smp * v->gainLeft) >> 8;
                                         audioDelayR += (smp * v->gainDelayRight) >> 8;
                                         audioDelayL += (smp * v->gainDelayLeft) >> 8;
-                                        if ( v->isPlayingBackward )
-                                        {
-                                            v->sampPos -= v->delta;
-                                            if ( v->sampPos <= v->smpLoopStart )
-                                            {
-                                                v->isPlayingBackward = 0;
-                                                v->sampPos += v->delta;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            v->sampPos += v->delta;
-                                            if ( v->sampPos >= v->smpLoopEnd )
-                                            {
-                                                if ( v->hasLoop )
-                                                {
-                                                    v->hasLooped = 1;
-                                                    if ( v->hasBidiLoop )
-                                                    {
-                                                        v->isPlayingBackward = 1;
-                                                        v->sampPos -= v->delta;
-                                                    }
-                                                    else
-                                                    {
-                                                        v->sampPos += v->smpLoopStart - v->smpLoopEnd;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    v->sampPos = -1;
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                                 else
                                 {
                                     //interpolation
                                     //smp = intp->interpSynt(v);
-                                    smp = v->waveBuff[v->synthPos>>8];
+                                    sample_t s;
+                                    while ( resampler_get_min_fill(v->resampler[1]) )
+                                    {
+                                        s = v->waveBuff[v->synthPos];
+                                        resampler_write_pair(v->resampler[1], s, s);
+                                        v->synthPos++;
+                                        v->synthPos &= v->wavelength;
+                                    }
+                                    resampler_read_pair(v->resampler[1], &s, &s);
+                                    smp = s;
 
                                     audioMainR  += (smp * v->gainRight) >> 8;
                                     audioMainL  += (smp * v->gainLeft) >> 8;
                                     audioDelayR += (smp * v->gainDelayRight) >> 8;
                                     audioDelayL += (smp * v->gainDelayLeft) >> 8;
-                                    v->synthPos += v->delta;
-                                    v->synthPos &= v->wavelength;
                                 }
                             }
                         }
