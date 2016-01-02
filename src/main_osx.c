@@ -99,6 +99,7 @@ int main(int argc, const char* const* argv)
             playerGetInfo(player, &info);
             fprintf(stderr, "\ro: %3u - r: %2u - c: %2u (%2u)", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
 		}
+        fprintf(stderr, "\n");
 
 		ao_close( dev );
 	}
