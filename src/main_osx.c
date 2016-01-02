@@ -15,6 +15,25 @@ void signal_handler(int sig)
     signal(sig, signal_handler);
 }
 
+void fade_buffer(signed short *buffer, unsigned int count, int fade_start, int fade_length)
+{
+    unsigned int i;
+    for (i = 0; i < count; i++)
+    {
+        if (fade_start < fade_length)
+        {
+            buffer[ i * 2 + 0 ] = (int64_t)((int64_t)buffer[ i * 2 + 0 ] * ( fade_length - fade_start )) / fade_length;
+            buffer[ i * 2 + 1 ] = (int64_t)((int64_t)buffer[ i * 2 + 1 ] * ( fade_length - fade_start )) / fade_length;
+            fade_start++;
+        }
+        else
+        {
+            buffer[ i * 2 + 0 ] = 0;
+            buffer[ i * 2 + 1 ] = 0;
+        }
+    }
+}
+
 int main(int argc, const char* const* argv)
 {
     Song * song;
@@ -63,11 +82,22 @@ int main(int argc, const char* const* argv)
 
 	if ( dev )
 	{
+        int fade_start = 0, fade_length = SAMPLE_RATE * 10;
+        int max_channels = 0;
+        syntrax_info info;
         running = 1;
         while ( running )
 		{
             mixChunk(player, sample_buffer, 2048);
+            if (playerGetSongEnded(player)) break;
+            if (playerGetLoopCount(player) >= 2)
+            {
+                fade_buffer( sample_buffer, 2048, fade_start, fade_length );
+                fade_start += 2048;
+            }
 			ao_play( dev, (char*) sample_buffer, 2048 * 4 );
+            playerGetInfo(player, &info);
+            fprintf(stderr, "\ro: %3u - r: %2u - c: %2u (%2u)", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
 		}
 
 		ao_close( dev );
