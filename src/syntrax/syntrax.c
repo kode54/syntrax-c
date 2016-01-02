@@ -1702,6 +1702,7 @@ static void ABH(Player *p)
                     if (_local5 == false){
                         p->posCoarse = p->curSubsong.loopPosCoarse;
                         p->posFine = p->curSubsong.loopPosFine;
+                        p->loopCount++;
                     }
                 } else {
                     p->PQV = 0;
@@ -2210,6 +2211,8 @@ void initSubsong(Player *p, int num)
     
     //reset instruments
     memcpy(p->instruments, p->synSong->instruments, p->synSong->h.instrNum * sizeof(Instrument));
+    
+    p->loopCount = 0;
 
     if (num >= p->synSong->h.subsongNum) return;
 
@@ -2301,4 +2304,34 @@ int loadSong(Player *p, const Song *synSong)
     initSubsong(p, 0);
     
     return 0;
+}
+
+bool playerGetSongEnded(Player *p)
+{
+    return p->PQV == 0;
+}
+
+uint playerGetLoopCount(Player *p)
+{
+    return p->loopCount;
+}
+
+void playerGetInfo(Player *p, syntrax_info *info)
+{
+    int i, j;
+    info->coarse = p->posCoarse;
+    info->fine = p->posFine;
+    for (i = 0, j = 0; i < p->channelNumber; i++)
+    {
+        Voice *v = &p->voices[i];
+        if (v->waveBuff != p->silentBuffer)
+        {
+            if (v->isSample)
+            {
+                if (v->sampPos != -1) j++;
+            }
+            else j++;
+        }
+    }
+    info->channelsPlaying = j;
 }

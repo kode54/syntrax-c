@@ -325,6 +325,8 @@ typedef struct Player
     const int16_t **samples;
 
     uint bufflen;
+    
+    uint loopCount;
 } Player;
 
 
@@ -343,6 +345,18 @@ void mixChunk(Player *, int16_t *outBuff, uint playbackBufferSize);
 
 void playInstrument(Player *, int chanNum, int instrNum, int note); //could be handy dandy
 
+bool playerGetSongEnded(Player *);
+uint playerGetLoopCount(Player *);
+    
+typedef struct _stmi
+{
+  unsigned char coarse;
+  unsigned char fine;
+  unsigned char channelsPlaying;
+} syntrax_info;
+    
+void playerGetInfo(Player *, syntrax_info *);
+    
 #ifdef __cplusplus
 }
 #endif
