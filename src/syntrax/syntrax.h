@@ -352,6 +352,9 @@ typedef struct _stmi
   unsigned char coarse;
   unsigned char fine;
   unsigned char channelsPlaying;
+  char subsongName[33];
+  int selectedSubs;
+  int totalSubs;
 } syntrax_info;
     
 void playerGetInfo(Player *, syntrax_info *);

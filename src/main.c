@@ -9,6 +9,7 @@
 
 #include <windows.h>  // for mixer stream
 #include <mmsystem.h> // for mixer stream
+#include <conio.h>    // keyboard input
 
 #include "syntrax\syntrax.h"
 
@@ -21,6 +22,7 @@ char audiobuffer[BUFFNUM][((44100*2*2)/50)];
 
 Song *sang = NULL;
 Player *player = NULL;
+syntrax_info info;
 
 HANDLE eventh;
 
@@ -72,23 +74,35 @@ void shut( void )
   if( hWaveOut != INVALID_HANDLE_VALUE ) waveOutClose( hWaveOut );
 }
 
+void updateScreen(void)
+{
+    playerGetInfo(player, &info);
+    //cls is expensive and I am lazy
+    //we can't put this in the loop
+    system("cls");
+    printf("Syntrax test player v0.0001 || %i/%i \n", info.selectedSubs+1, info.totalSubs);
+    printf("Title: %s\n", info.subsongName);
+}
+
 int main(int argc, char *argv[])
 {
   WAVEHDR header[BUFFNUM];
   int nextbuf = 0;
   //sigset_t base_mask, waiting_mask;
 
-  printf( "Syntrax test player v0.000000001\n" );
-
   if( argc < 2 )
   {
     printf( "Usage: syntrax-c <tune.jxs>\n" );
+    printf( "[ and ] keys change subtune.\n" );
+    printf( "\n" );
+    system("pause");
     return 0;
   }
 
   if( init( argv[1] ) )
   {
     int i;
+    updateScreen();
 
     for ( i=0; i<BUFFNUM; i++ ){
         memset( &header[i], 0, sizeof( WAVEHDR ) );
@@ -96,15 +110,14 @@ int main(int argc, char *argv[])
         header[i].lpData         = (LPSTR)audiobuffer[i];
     }
     for ( i=0; i<BUFFNUM-1; i++ ){
-        mixChunk(player, audiobuffer[nextbuf], 44100/50);
+        mixChunk(player, audiobuffer[nextbuf], 882);
         waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         nextbuf = (nextbuf+1)%BUFFNUM;
     }
-    
     for(;;)
     {
-      mixChunk(player, audiobuffer[nextbuf], 44100/50);
+      mixChunk(player, audiobuffer[nextbuf], 882);
       waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       nextbuf = (nextbuf+1)%BUFFNUM;
@@ -112,6 +125,43 @@ int main(int argc, char *argv[])
       // Don't do this in your own player or plugin :-)
       //while( waveOutUnprepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) ) == WAVERR_STILLPLAYING ) ;
       while( waveOutUnprepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) ) == WAVERR_STILLPLAYING ){
+        if (_kbhit()) {
+            int subnum;
+            switch (_getch()) {
+                case 0:  /* introduces an extended key */
+                case 227:  /* this also happens on Win32 (I think) */
+                    switch (_getch()) {  /* read the extended key code */
+                        case 72: /* up arrow press */
+                            break;
+                        case 75: /* left arrow press */
+                            break;
+                        case 77: /* right arrow press */
+                            break;
+                        case 80: /* down arrow press */
+                            break;
+                        /* etc */
+                    }
+                    break;
+                case '[':
+                    subnum = info.selectedSubs;
+                    --subnum;
+                    if (subnum < 0) subnum = info.totalSubs - 1;
+                    
+                    if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                    updateScreen();
+                    break;
+                case ']':
+                    subnum = info.selectedSubs;
+                    subnum = ++subnum % info.totalSubs;
+                    
+                    if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                    updateScreen();
+                    break;
+
+                case 'H': /* capital 'H' key press */ break;
+              /* etc */
+            }
+        }
         WaitForSingleObject(eventh, INFINITE);
       }
       ResetEvent(eventh);

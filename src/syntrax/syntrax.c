@@ -2331,6 +2331,9 @@ void playerGetInfo(Player *p, syntrax_info *info)
     int i, j;
     info->coarse = p->posCoarse;
     info->fine = p->posFine;
+    memcpy(&info->subsongName, &p->curSubsong.m_Name, 33);
+    info->selectedSubs = p->selectedSubsong;
+    info->totalSubs = p->synSong->h.subsongNum;
     for (i = 0, j = 0; i < p->channelNumber; i++)
     {
         Voice *v = &p->voices[i];
