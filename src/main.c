@@ -14,17 +14,65 @@
 #include "syntrax\syntrax.h"
 
 #define BUFFNUM 8
+#define RATE    44100
+#define BUFFLEN ((RATE*2*2)/50)
 
 HWAVEOUT     hWaveOut = INVALID_HANDLE_VALUE; /* Device handle */
 WAVEFORMATEX wfx;
 LPSTR        audblock;
-char audiobuffer[BUFFNUM][((44100*2*2)/50)];
+char audiobuffer[BUFFNUM][BUFFLEN];
 
 Song *sang = NULL;
 Player *player = NULL;
 syntrax_info info;
+int max_channels = 0;
 
 HANDLE eventh;
+
+ /* Standard error macro for reporting API errors */ 
+ #define PERR(bSuccess, api){if(!(bSuccess)) printf("%s:Error %d from %s \ 
+    on line %d\n", __FILE__, GetLastError(), api, __LINE__);}
+
+void cls( HANDLE hConsole )
+{
+    COORD coordScreen = { 0, 0 };    /* here's where we'll home the
+                                        cursor */ 
+    BOOL bSuccess;
+    DWORD cCharsWritten;
+    CONSOLE_SCREEN_BUFFER_INFO csbi; /* to get buffer info */ 
+    DWORD dwConSize;                 /* number of character cells in
+                                        the current buffer */ 
+
+    /* get the number of character cells in the current buffer */ 
+
+    bSuccess = GetConsoleScreenBufferInfo( hConsole, &csbi );
+    PERR( bSuccess, "GetConsoleScreenBufferInfo" );
+    dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+
+    /* fill the entire screen with blanks */ 
+
+    bSuccess = FillConsoleOutputCharacter( hConsole, (TCHAR) ' ',
+       dwConSize, coordScreen, &cCharsWritten );
+    PERR( bSuccess, "FillConsoleOutputCharacter" );
+
+    /* get the current text attribute */ 
+
+    bSuccess = GetConsoleScreenBufferInfo( hConsole, &csbi );
+    PERR( bSuccess, "ConsoleScreenBufferInfo" );
+
+    /* now set the buffer's attributes accordingly */ 
+
+    bSuccess = FillConsoleOutputAttribute( hConsole, csbi.wAttributes,
+       dwConSize, coordScreen, &cCharsWritten );
+    PERR( bSuccess, "FillConsoleOutputAttribute" );
+
+    /* put the cursor at (0, 0) */ 
+
+    bSuccess = SetConsoleCursorPosition( hConsole, coordScreen );
+    PERR( bSuccess, "SetConsoleCursorPosition" );
+return;
+}
+
 
 void pressAny(void) {
     printf("Clicky key, get continue!\n");
@@ -35,7 +83,7 @@ BOOL init( char *name )
 {
   //MMRESULT result;
 
-  wfx.nSamplesPerSec  = 44100;
+  wfx.nSamplesPerSec  = RATE;
   wfx.wBitsPerSample  = 16;
   wfx.nChannels       = 2;
 
@@ -47,7 +95,7 @@ BOOL init( char *name )
   sang = File_loadSong( name );
   if ( !sang ) return FALSE;
     
-  player = playerCreate( 44100 );
+  player = playerCreate( RATE );
   if( !player ) return FALSE;
     
   if ( loadSong( player, sang ) < 0 ) return FALSE;
@@ -77,10 +125,9 @@ void shut( void )
 void updateScreen(void)
 {
     playerGetInfo(player, &info);
-    //cls is expensive and I am lazy
-    //we can't put this in the loop
-    system("cls");
-    printf("Syntrax test player v0.0001 || %i/%i \n", info.selectedSubs+1, info.totalSubs);
+    cls( GetStdHandle( STD_OUTPUT_HANDLE ));
+    printf("Syntrax test player v0.0001 || %i/%i\n", info.selectedSubs+1, info.totalSubs);
+    printf("\ro: %3u - r: %2u - c: %2u (%2u)\n", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
     printf("Title: %s\n", info.subsongName);
 }
 
@@ -108,18 +155,18 @@ int main(int argc, char *argv[])
 
     for ( i=0; i<BUFFNUM; i++ ){
         memset( &header[i], 0, sizeof( WAVEHDR ) );
-        header[i].dwBufferLength = ((44100*2*2)/50);
+        header[i].dwBufferLength = BUFFLEN;
         header[i].lpData         = (LPSTR)audiobuffer[i];
     }
     for ( i=0; i<BUFFNUM-1; i++ ){
-        mixChunk(player, audiobuffer[nextbuf], 882);
+        mixChunk(player, audiobuffer[nextbuf], BUFFLEN/4);
         waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
         nextbuf = (nextbuf+1)%BUFFNUM;
     }
     for(;;)
     {
-      mixChunk(player, audiobuffer[nextbuf], 882);
+      mixChunk(player, audiobuffer[nextbuf], BUFFLEN/4);
       waveOutPrepareHeader( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       waveOutWrite( hWaveOut, &header[nextbuf], sizeof( WAVEHDR ) );
       nextbuf = (nextbuf+1)%BUFFNUM;
@@ -138,6 +185,7 @@ int main(int argc, char *argv[])
                             if (subnum < 0) subnum = info.totalSubs - 1;
                             
                             if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                            max_channels = 0;
                             updateScreen();
                             break;
                         case 62:    //F4, subtune++
@@ -145,6 +193,7 @@ int main(int argc, char *argv[])
                             subnum = ++subnum % info.totalSubs;
                             
                             if (info.selectedSubs != subnum) initSubsong(player, subnum);
+                            max_channels = 0;
                             updateScreen();
                             break;
                         case 72:    //up arrow press
@@ -166,6 +215,7 @@ int main(int argc, char *argv[])
               /* etc */
             }
         }
+        updateScreen();
         WaitForSingleObject(eventh, INFINITE);
       }
       ResetEvent(eventh);
@@ -180,4 +230,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
