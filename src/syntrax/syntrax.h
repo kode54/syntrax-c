@@ -352,7 +352,7 @@ typedef struct _stmi
   unsigned char coarse;
   unsigned char fine;
   unsigned char channelsPlaying;
-  char subsongName[33];
+  char *subsongName;
   int selectedSubs;
   int totalSubs;
 } syntrax_info;

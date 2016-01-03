@@ -24,6 +24,7 @@ static void reset(Player *p)
     if (p->tuneChannels){
         for (i = 0; i < SE_MAXCHANS; i++) {
             TuneChannel *tc = &p->tuneChannels[i];
+            Voice *v = &p->voices[i];
 
             tc->EQMIWERPIF = 0;
             tc->LJHG = 0;
@@ -52,6 +53,7 @@ static void reset(Player *p)
             tc->isPlayingBackward = 0;
             tc->hasLooped = 0;
 
+            v->waveBuff = p->silentBuffer;
             for (j = 0; j < 4; j++) {
                 VoiceEffect *ve = &tc->effects[j];
 
@@ -2333,7 +2335,7 @@ void playerGetInfo(Player *p, syntrax_info *info)
     int i, j;
     info->coarse = p->posCoarse;
     info->fine = p->posFine;
-    memcpy(&info->subsongName, &p->curSubsong.m_Name, 33);
+    info->subsongName = &p->curSubsong.m_Name;
     info->selectedSubs = p->selectedSubsong;
     info->totalSubs = p->synSong->h.subsongNum;
     for (i = 0, j = 0; i < p->channelNumber; i++)
