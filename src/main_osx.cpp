@@ -42,11 +42,11 @@ void fade_buffer(signed short *buffer, unsigned int count, int fade_start, int f
 void render(void * unused, short * samples, uint32_t sampleCount)
 {
     syntrax_info info;
-    mixChunk(player, sample_buffer, sampleCount);
+    mixChunk(player, samples, sampleCount);
     if (playerGetSongEnded(player)) running = 0;
     if (playerGetLoopCount(player) >= 2)
     {
-        fade_buffer( sample_buffer, sampleCount, fade_start, fade_length );
+        fade_buffer( samples, sampleCount, fade_start, fade_length );
         fade_start += sampleCount;
     }
     playerGetInfo(player, &info);
@@ -91,7 +91,7 @@ int main(int argc, const char* const* argv)
 
 	signal(SIGINT, signal_handler);
 
-    output = new CoreAudioPlayer(render, SAMPLE_RATE);
+    output = new CoreAudioStream(render, 0, SAMPLE_RATE);
     
 	if ( output )
 	{
