@@ -57,6 +57,7 @@ int main(int argc, const char* const* argv)
 {
     Song * song;
     CoreAudioStream * output;
+    syntrax_info info;
 
 	if (argc != 2)
 	{
@@ -89,7 +90,12 @@ int main(int argc, const char* const* argv)
 
     initSubsong(player, 0);
 
-	signal(SIGINT, signal_handler);
+    playerGetInfo(player, &info);
+    printf("Syntrax test player v0.0001 || %i/%i\n", info.selectedSubs+1, info.totalSubs);
+    printf("Title: %s\n", info.subsongName);
+    printf("\ro: %3u - r: %2u - c: %2u (%2u)", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
+
+    signal(SIGINT, signal_handler);
 
     output = new CoreAudioStream(render, 0, SAMPLE_RATE);
     
