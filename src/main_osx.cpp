@@ -1,13 +1,18 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <signal.h>
-#include <ao/ao.h>
+
+#include "audio_output.h"
 
 #include "file.h"
 
 #define SAMPLE_RATE 44100 /* 22050 - test low-pass capability of blep synthesizer */
 
 static int running;
+
+static Player * player;
+static volatile int fade_start, fade_length;
+static volatile int max_channels;
 
 void signal_handler(int sig)
 {
@@ -34,14 +39,24 @@ void fade_buffer(signed short *buffer, unsigned int count, int fade_start, int f
     }
 }
 
+void render(void * unused, short * samples, uint32_t sampleCount)
+{
+    syntrax_info info;
+    mixChunk(player, sample_buffer, sampleCount);
+    if (playerGetSongEnded(player)) running = 0;
+    if (playerGetLoopCount(player) >= 2)
+    {
+        fade_buffer( sample_buffer, sampleCount, fade_start, fade_length );
+        fade_start += sampleCount;
+    }
+    playerGetInfo(player, &info);
+    fprintf(stderr, "\ro: %3u - r: %2u - c: %2u (%2u)", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
+}
+
 int main(int argc, const char* const* argv)
 {
     Song * song;
-	Player * player;
-	ao_device * dev;
-    ao_sample_format fmt = { 16, SAMPLE_RATE, 2, AO_FMT_NATIVE, 0 };
-
-	signed short sample_buffer[2048 * 2];
+    CoreAudioStream * output;
 
 	if (argc != 2)
 	{
@@ -76,36 +91,24 @@ int main(int argc, const char* const* argv)
 
 	signal(SIGINT, signal_handler);
 
-	ao_initialize();
-
-	dev = ao_open_live( ao_default_driver_id(), &fmt, NULL );
-
-	if ( dev )
+    output = new CoreAudioPlayer(render, SAMPLE_RATE);
+    
+	if ( output )
 	{
-        int fade_start = 0, fade_length = SAMPLE_RATE * 10;
-        int max_channels = 0;
-        syntrax_info info;
+        fade_start = 0; fade_length = SAMPLE_RATE * 10;
+        max_channels = 0;
         running = 1;
+        output->start();
         while ( running && fade_start < fade_length )
 		{
-            mixChunk(player, sample_buffer, 2048);
-            if (playerGetSongEnded(player)) break;
-            if (playerGetLoopCount(player) >= 2)
-            {
-                fade_buffer( sample_buffer, 2048, fade_start, fade_length );
-                fade_start += 2048;
-            }
-			ao_play( dev, (char*) sample_buffer, 2048 * 4 );
-            playerGetInfo(player, &info);
-            fprintf(stderr, "\ro: %3u - r: %2u - c: %2u (%2u)", info.coarse, info.fine, info.channelsPlaying, info.channelsPlaying > max_channels ? max_channels = info.channelsPlaying : max_channels);
+            usleep(10000);
 		}
+        output->close();
         fprintf(stderr, "\n");
-
-		ao_close( dev );
 	}
 
-	ao_shutdown();
-
+    delete output;
+    
     playerDestroy(player);
     File_freeSong(song);
 
