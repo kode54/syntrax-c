@@ -1806,7 +1806,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
 
                 v->gain = (tc->volume + 10000) / 39;
                 v->delta = (tc->freq << 8) / p->SAMPLEFREQUENCY;
-                if (v->delta != v->last_delta)
+                if (v->delta != v->last_delta && outBuff )
                 {
                     double fdelta = (double)v->delta * (1.0 / (double)0x100);
                     v->last_delta = v->delta;

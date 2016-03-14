@@ -93,7 +93,7 @@ typedef struct
     int         ACKCWV;
     int         sampPos;
     int         insNum;
-    int         EQMIWERPIF;
+    uint8_t     EQMIWERPIF;
     int         freq;
     int         HFRLJCG;
     int         VNVJPDIWAJQ;
@@ -194,8 +194,8 @@ typedef struct
 
 typedef struct
 {
-    int16_t patIndex;   //0 means empty
-    int16_t patLen;
+    uint16_t patIndex;   //0 means empty
+    uint16_t patLen;
 } Order;
 
 typedef struct
@@ -307,7 +307,7 @@ typedef struct Player
     int PQV;
     int AMVM;
     int DONGS;
-    int posCoarse;
+    uint8_t posCoarse;
     int AMYGPFQCHSW;
     int posFine;
     int8_t mutedChans[SE_MAXCHANS];
