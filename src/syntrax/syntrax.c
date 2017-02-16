@@ -1880,7 +1880,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                         while ( v->sampPos != -1 && resampler_get_min_fill(v->resampler[0]) )
                                         {
                                             s = v->waveBuff[v->sampPos];
-                                            resampler_write_pair(v->resampler[0], s, s);
+                                            resampler_write_sample(v->resampler[0], s);
                                             if ( v->isPlayingBackward )
                                             {
                                                 v->sampPos--;
@@ -1917,7 +1917,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                         }
                                         
                                         //smp = intp->interpSamp(v);
-                                        resampler_read_pair(v->resampler[0], &s, &s);
+                                        resampler_read_sample(v->resampler[0], &s);
                                         smp = s;
 
                                         audioMainR  += (smp * v->gainRight) >> 8;
@@ -1934,11 +1934,11 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                     while ( resampler_get_min_fill(v->resampler[0]) )
                                     {
                                         s = v->waveBuff[v->synthPos];
-                                        resampler_write_pair(v->resampler[0], s, s);
+                                        resampler_write_sample(v->resampler[0], s);
                                         v->synthPos++;
                                         v->synthPos &= v->wavelength;
                                     }
-                                    resampler_read_pair(v->resampler[0], &s, &s);
+                                    resampler_read_sample(v->resampler[0], &s);
                                     smp = s;
 
                                     audioMainR  += (smp * v->gainRight) >> 8;
@@ -2026,7 +2026,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                         while ( v->sampPos != -1 && resampler_get_min_fill(v->resampler[1]) )
                                         {
                                             s = v->waveBuff[v->sampPos];
-                                            resampler_write_pair(v->resampler[1], s, s);
+                                            resampler_write_sample(v->resampler[1], s);
                                             if ( v->isPlayingBackward )
                                             {
                                                 v->sampPos--;
@@ -2061,7 +2061,7 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                                 }
                                             }
                                         }
-                                        resampler_read_pair(v->resampler[1], &s, &s);
+                                        resampler_read_sample(v->resampler[1], &s);
                                         smp = s;
 
                                         audioMainR  += (smp * v->gainRight) >> 8;
@@ -2078,11 +2078,11 @@ void mixChunk(Player *p, int16_t *outBuff, uint playbackBufferSize)
                                     while ( resampler_get_min_fill(v->resampler[1]) )
                                     {
                                         s = v->waveBuff[v->synthPos];
-                                        resampler_write_pair(v->resampler[1], s, s);
+                                        resampler_write_sample(v->resampler[1], s);
                                         v->synthPos++;
                                         v->synthPos &= v->wavelength;
                                     }
-                                    resampler_read_pair(v->resampler[1], &s, &s);
+                                    resampler_read_sample(v->resampler[1], &s);
                                     smp = s;
 
                                     audioMainR  += (smp * v->gainRight) >> 8;
