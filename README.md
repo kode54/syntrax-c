@@ -1,5 +1,7 @@
 A C port of the AS3 version of Syntrax replayer.
 
+Original port and modifications by a friend, who wishes to be divested from this publication.
+
 Some conventions/helpers/whatever:
 * Number becomes double. Decide after if keep it as such or make it.
 
@@ -11,6 +13,8 @@ Some conventions/helpers/whatever:
 
 * WaveBuffer is a helper in AS3 and can be replaced with proper C.
   
-* When renaming/understanding stuff, Jaytrax' GUI will be of help.
-  Syntrax, not so much because of instability and the mobile UI with design shortcuts taken.
-  For example, Jay's arpeggiator allows you to define 16 steps freely. Syn forces you to use arp presets.
+* When renaming/understanding stuff, Jaytrax' GUI will be of help. Syntrax, not so much because of instability and the mobile UI with design shortcuts taken. For example, Jay's arpeggiator allows you to define 16 steps freely. Syn forces you to use arp presets.
+
+Test vectors uploaded here:
+
+[jaytrax demo songs and test vectors.tar.xz](https://f.losno.co/jaytrax_demo_songs_and_test_vectors.tar.xz)
