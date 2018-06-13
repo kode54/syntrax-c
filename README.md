@@ -17,4 +17,6 @@ Some conventions/helpers/whatever:
 
 Test vectors uploaded here:
 
-[jaytrax demo songs and test vectors.tar.xz](https://f.losno.co/jaytrax_demo_songs_and_test_vectors.tar.xz)
+On Amazon S3: [jaytrax demo songs and test vectors.tar.xz](https://f.losno.co/jaytrax_demo_songs_and_test_vectors.tar.xz)
+
+[Post with some songs](http://viewer.scuttlebot.io/%25Be%2BwDtlXz%2BL7fXnCqNUl7eDOGVOJ4gqr%2B2p1REheS98%3D.sha256) on [Scuttlebutt](https://www.scuttlebutt.nz).
