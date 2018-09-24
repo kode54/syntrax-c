@@ -1,6 +1,8 @@
 A C port of the AS3 version of Syntrax replayer.
 
-Original port and modifications by a friend, who wishes to be divested from this publication.
+Original C++ and subsequent ActionScript port by rhinoid - [their GitHub](https://github.com/rhinoid) - [their BitBucket](https://bitbuket.org/rhinoid).
+
+Original port from ActionScript and modifications by a friend, who wishes to be divested from this publication. Except I failed to do that. Meh.
 
 Some conventions/helpers/whatever:
 * Number becomes double. Decide after if keep it as such or make it.
