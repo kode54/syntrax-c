@@ -1,6 +1,6 @@
 A C port of the AS3 version of Syntrax replayer.
 
-Original C++ and subsequent ActionScript port by rhinoid - [their GitHub](https://github.com/rhinoid) - [their BitBucket](https://bitbuket.org/rhinoid).
+Original C++ and subsequent ActionScript port by rhinoid - [their GitHub](https://github.com/rhinoid) - [their BitBucket](https://bitbucket.org/rhinoid).
 
 Original port from ActionScript and modifications by a friend, who wishes to be divested from this publication. Except I failed to do that. Meh.
 
